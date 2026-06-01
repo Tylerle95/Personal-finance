@@ -77,7 +77,7 @@
 
 **Purpose**: Final verification, cleanup, and validation
 
-- [ ] T014 Run manual verification scenarios defined in `specs/002-asset-management/quickstart.md` to ensure the entire flow is working without errors
+- [x] T014 Run manual verification scenarios defined in `specs/002-asset-management/quickstart.md` to ensure the entire flow is working without errors
 
 ---
 
