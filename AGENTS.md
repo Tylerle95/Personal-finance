@@ -7,7 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **Personal-finance** (38 symbols, 29 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **Personal-finance** (187 symbols, 211 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -50,5 +50,6 @@ This project is indexed by GitNexus as **Personal-finance** (38 symbols, 29 rela
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+shell commands, and other important information, read the current plan:
+[specs/001-user-auth/plan.md](file:///Users/tylerle/Documents/Me/Personal-finance/specs/001-user-auth/plan.md)
 <!-- SPECKIT END -->
