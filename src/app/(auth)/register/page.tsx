@@ -3,6 +3,7 @@
 import React, { useActionState } from 'react'
 import Link from 'next/link'
 import { signUp } from '@/app/actions/auth'
+import { useLanguage } from '@/components/providers'
 import { User, Mail, Lock, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 
 const initialState = {
@@ -13,142 +14,151 @@ const initialState = {
 
 export default function RegisterPage() {
   const [state, formAction, isPending] = useActionState(signUp, initialState)
+  const { t } = useLanguage()
 
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight text-white">
-          Đăng ký tài khoản
+        <h2 className="text-2xl font-bold tracking-tight dark:text-white text-slate-900">
+          {t('registerTitle')}
         </h2>
-        <p className="mt-1.5 text-sm text-slate-400">
-          Tạo tài khoản mới để bắt đầu thiết lập tài chính thông minh
+        <p className="mt-2 text-sm dark:text-slate-400 text-slate-500 leading-relaxed">
+          {t('registerSubtitle')}
         </p>
       </div>
 
       {state?.success ? (
-        <div className="space-y-6 py-4 text-center animate-in fade-in zoom-in-95 duration-200">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <CheckCircle className="h-6 w-6" />
+        <div className="space-y-6 py-4 text-center animate-in fade-in zoom-in-95 duration-300">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5 animate-bounce">
+            <CheckCircle className="h-7 w-7" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-lg font-medium text-white">Đăng ký thành công!</h3>
-            <p className="text-sm text-slate-400 px-2 leading-relaxed">
-              {state.message || 'Tài khoản của bạn đã được khởi tạo.'}
+            <h3 className="text-lg font-bold dark:text-white text-slate-900">{t('regSuccess')}</h3>
+            <p className="text-sm dark:text-slate-400 text-slate-500 px-2 leading-relaxed">
+              {state.message || t('regSuccessDesc')}
             </p>
           </div>
           <Link
             href="/login"
-            className="inline-flex w-full justify-center items-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:from-violet-500 hover:to-indigo-500 transition-all duration-200"
+            className="inline-flex w-full justify-center items-center rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-600/25 hover:from-violet-500 hover:to-indigo-500 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           >
-            Đăng nhập ngay
+            {t('signInNow')}
           </Link>
         </div>
       ) : (
         <form action={formAction} className="space-y-5">
           {state?.error && (
-            <div className="flex items-center gap-2.5 rounded-lg border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-500 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-250">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              <p>{state.error}</p>
+              <p className="font-medium">{state.error}</p>
             </div>
           )}
 
-          <div className="space-y-1.5">
+          {/* Full Name Input with Material Floating Label */}
+          <div className="relative">
+            <input
+              id="full_name"
+              name="full_name"
+              type="text"
+              autoComplete="name"
+              required
+              placeholder=" "
+              className="peer block w-full rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-950/40 bg-white/40 pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 placeholder-transparent"
+            />
+            <div className="pointer-events-none absolute top-4.5 left-3 flex items-center">
+              <User className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-violet-500" />
+            </div>
             <label
               htmlFor="full_name"
-              className="text-xs font-medium uppercase tracking-wider text-slate-400"
+              className="pointer-events-none absolute left-10 top-3 text-xs font-semibold text-slate-400 dark:text-slate-500 transition-all duration-250 
+                         peer-placeholder-shown:text-sm peer-placeholder-shown:top-4.5 peer-placeholder-shown:font-normal
+                         peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-violet-500 peer-focus:font-semibold
+                         peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-violet-500 peer-[&:not(:placeholder-shown)]:font-semibold"
             >
-              Họ và Tên
+              {t('fullName')}
             </label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <User className="h-4 w-4 text-slate-500" />
-              </div>
-              <input
-                id="full_name"
-                name="full_name"
-                type="text"
-                autoComplete="name"
-                required
-                className="block w-full rounded-lg border border-slate-800 bg-slate-950/50 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-600 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-                placeholder="Nguyễn Văn A"
-              />
-            </div>
           </div>
 
-          <div className="space-y-1.5">
+          {/* Email Input with Material Floating Label */}
+          <div className="relative">
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              placeholder=" "
+              className="peer block w-full rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-950/40 bg-white/40 pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 placeholder-transparent"
+            />
+            <div className="pointer-events-none absolute top-4.5 left-3 flex items-center">
+              <Mail className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-violet-500" />
+            </div>
             <label
               htmlFor="email"
-              className="text-xs font-medium uppercase tracking-wider text-slate-400"
+              className="pointer-events-none absolute left-10 top-3 text-xs font-semibold text-slate-400 dark:text-slate-500 transition-all duration-250 
+                         peer-placeholder-shown:text-sm peer-placeholder-shown:top-4.5 peer-placeholder-shown:font-normal
+                         peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-violet-500 peer-focus:font-semibold
+                         peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-violet-500 peer-[&:not(:placeholder-shown)]:font-semibold"
             >
-              Địa chỉ Email
+              {t('email')}
             </label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Mail className="h-4 w-4 text-slate-500" />
-              </div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="block w-full rounded-lg border border-slate-800 bg-slate-950/50 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-600 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-                placeholder="name@example.com"
-              />
-            </div>
           </div>
 
-          <div className="space-y-1.5">
+          {/* Password Input with Material Floating Label */}
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              placeholder=" "
+              className="peer block w-full rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-950/40 bg-white/40 pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 placeholder-transparent"
+            />
+            <div className="pointer-events-none absolute top-4.5 left-3 flex items-center">
+              <Lock className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-violet-500" />
+            </div>
             <label
               htmlFor="password"
-              className="text-xs font-medium uppercase tracking-wider text-slate-400"
+              className="pointer-events-none absolute left-10 top-3 text-xs font-semibold text-slate-400 dark:text-slate-500 transition-all duration-250 
+                         peer-placeholder-shown:text-sm peer-placeholder-shown:top-4.5 peer-placeholder-shown:font-normal
+                         peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-violet-500 peer-focus:font-semibold
+                         peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-violet-500 peer-[&:not(:placeholder-shown)]:font-semibold"
             >
-              Mật khẩu
+              {t('password')}
             </label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Lock className="h-4 w-4 text-slate-500" />
-              </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="block w-full rounded-lg border border-slate-800 bg-slate-950/50 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-600 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-                placeholder="••••••••"
-              />
-            </div>
           </div>
 
+          {/* Premium Submit Button */}
           <button
             type="submit"
             disabled={isPending}
-            className="relative flex w-full justify-center items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:from-violet-500 hover:to-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+            className="relative flex w-full justify-center items-center gap-2 rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-600/25 hover:from-violet-500 hover:to-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Đang đăng ký...
+                {t('loadingReg')}
               </>
             ) : (
-              'Đăng ký tài khoản'
+              t('registerButton')
             )}
           </button>
         </form>
       )}
 
       {!state?.success && (
-        <p className="mt-6 text-center text-sm text-slate-400">
-          Đã có tài khoản?{' '}
+        <p className="mt-6 text-center text-sm dark:text-slate-400 text-slate-500">
+          {t('hasAccount')}{' '}
           <Link
             href="/login"
-            className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+            className="font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 transition-colors duration-150"
           >
-            Đăng nhập
+            {t('loginTitle')}
           </Link>
         </p>
       )}
     </>
   )
 }
+
