@@ -1,0 +1,17 @@
+{
+  "name": "Personal Finance Tracker",
+  "short_name": "Finance",
+  "description": "Ứng dụng quản lý thu chi tài chính cá nhân thông minh",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

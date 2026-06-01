@@ -16,7 +16,7 @@
 
 **Purpose**: Project configuration and environment variables setup
 
-- [ ] T001 Configure Supabase environment variables in `.env.local`
+- [x] T001 Configure Supabase environment variables in `.env.local`
 
 ---
 
@@ -26,10 +26,10 @@
 
 **⚠️ CRITICAL**: No user story page or form work can begin until this phase is complete
 
-- [ ] T002 Create browser-side Supabase client helper in `src/lib/supabase/client.ts`
-- [ ] T003 [P] Create server-side Supabase client helper in `src/lib/supabase/server.ts`
-- [ ] T004 [P] Create middleware session helper client in `src/lib/supabase/middleware.ts`
-- [ ] T005 Implement route protection and session refresh in Next.js Middleware `src/middleware.ts`
+- [x] T002 Create browser-side Supabase client helper in `src/lib/supabase/client.ts`
+- [x] T003 [P] Create server-side Supabase client helper in `src/lib/supabase/server.ts`
+- [x] T004 [P] Create middleware session helper client in `src/lib/supabase/middleware.ts`
+- [x] T005 Implement route protection and session refresh in Next.js Middleware `src/middleware.ts`
 
 **Checkpoint**: Foundation ready - auth clients and route protection middleware are operational.
 
@@ -43,8 +43,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Create the sign-up Server Action (`signUp`) in `src/app/actions/auth.ts`
-- [ ] T007 [P] [US1] Build the premium, mobile-friendly Registration page component at `src/app/(auth)/register/page.tsx`
+- [x] T006 [US1] Create the sign-up Server Action (`signUp`) in `src/app/actions/auth.ts`
+- [x] T007 [P] [US1] Build the premium, mobile-friendly Registration page component at `src/app/(auth)/register/page.tsx`
 
 **Checkpoint**: User registration is functional and profile metadata is stored correctly in the database.
 
@@ -58,8 +58,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] Create the sign-in Server Action (`signIn`) in `src/app/actions/auth.ts`
-- [ ] T009 [P] [US2] Build the premium, mobile-friendly Login page component at `src/app/(auth)/login/page.tsx`
+- [x] T008 [US2] Create the sign-in Server Action (`signIn`) in `src/app/actions/auth.ts`
+- [x] T009 [P] [US2] Build the premium, mobile-friendly Login page component at `src/app/(auth)/login/page.tsx`
 
 **Checkpoint**: User sign-in is operational, verifying credentials and creating active sessions.
 
@@ -73,10 +73,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T010 [US3] Create the sign-out Server Action (`signOut`) in `src/app/actions/auth.ts`
-- [ ] T011 [US3] Implement Dashboard placeholder page at `src/app/dashboard/page.tsx` with user email display and Sign Out button
-- [ ] T012 [US3] Implement routing/redirection landing logic in root page `src/app/page.tsx`
-- [ ] T013 [US3] Implement Email confirmation callback route handler at `src/app/auth/callback/route.ts`
+- [x] T010 [US3] Create the sign-out Server Action (`signOut`) in `src/app/actions/auth.ts`
+- [x] T011 [US3] Implement Dashboard placeholder page at `src/app/dashboard/page.tsx` with user email display and Sign Out button
+- [x] T012 [US3] Implement routing/redirection landing logic in root page `src/app/page.tsx`
+- [x] T013 [US3] Implement Email confirmation callback route handler at `src/app/auth/callback/route.ts`
 
 **Checkpoint**: Protected routes are locked, active user sessions can be terminated, and callback handler is operational.
 
@@ -86,8 +86,8 @@
 
 **Purpose**: PWA meta configuration, styles verification, and manual validation.
 
-- [ ] T014 Configure PWA manifest references and viewport/theme metadata in `src/app/layout.tsx`
-- [ ] T015 Run validation checks following the verification flow in [quickstart.md](./quickstart.md)
+- [x] T014 Configure PWA manifest references and viewport/theme metadata in `src/app/layout.tsx`
+- [x] T015 Run validation checks following the verification flow in [quickstart.md](./quickstart.md)
 
 ---
 
