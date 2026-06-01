@@ -30,13 +30,13 @@ Validation occurs client-side for immediate user feedback and server-side inside
 
 | Field | Type | Required | Rules | Error Message |
 |-------|------|----------|-------|---------------|
-| `full_name` | String | Yes | Minimum 2 characters, alphanumeric and spaces | "Full name must be at least 2 characters long." |
-| `email` | String | Yes | Valid email format (RFC 5322 regex) | "Please enter a valid email address." |
-| `password` | String | Yes | Minimum 8 characters, at least 1 letter and 1 number | "Password must be at least 8 characters long and contain both letters and numbers." |
+| `full_name` | String | Yes | Minimum 2 characters, alphanumeric and spaces | "Họ và tên phải có ít nhất 2 ký tự." |
+| `email` | String | Yes | Valid email format (RFC 5322 regex) | "Vui lòng nhập địa chỉ email hợp lệ." |
+| `password` | String | Yes | Minimum 8 characters, at least 1 letter and 1 number | "Mật khẩu phải từ 8 ký tự trở lên và chứa cả chữ và số." |
 
 ### 2. User Login Schema
 
 | Field | Type | Required | Rules | Error Message |
 |-------|------|----------|-------|---------------|
-| `email` | String | Yes | Non-empty | "Email is required." |
-| `password` | String | Yes | Non-empty | "Password is required." |
+| `email` | String | Yes | Non-empty | "Email là bắt buộc." |
+| `password` | String | Yes | Non-empty | "Mật khẩu là bắt buộc." |

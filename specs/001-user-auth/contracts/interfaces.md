@@ -9,7 +9,7 @@ This document details the interface definitions, paths, and server action contra
 | `/login` | Public (Unauthenticated) | Client Page | Auth Layout | Redirects to `/dashboard` if user is already logged in. |
 | `/register` | Public (Unauthenticated) | Client Page | Auth Layout | Redirects to `/dashboard` if user is already logged in. |
 | `/dashboard` | Protected (Private) | Server Page | Dashboard Layout | Redirects to `/login` if user is not logged in. |
-| `/auth/callback` | Public API | Route Handler | N/A | Exchages temp oauth/confirm code for session cookies, then redirects to `/dashboard`. |
+| `/auth/callback` | Public API | Route Handler | N/A | Exchanges temp oauth/confirm code for session cookies, then redirects to `/dashboard`. |
 
 ---
 
@@ -18,7 +18,7 @@ This document details the interface definitions, paths, and server action contra
 Server actions process credentials on the server side, interact with Supabase Auth, and manage cookie states.
 
 ### A. `signUp`
-Registers a new user and signs them in or sends a verification email.
+Registers a new user and signs them in immediately (auto-login).
 
 * **Signature**:
   ```typescript
@@ -32,7 +32,7 @@ Registers a new user and signs them in or sends a verification email.
 * **Behavior**:
   1. Validates inputs.
   2. Calls `supabase.auth.signUp({ email, password, options: { data: { full_name } } })`.
-  3. Returns `{ error: null, success: true }` if successful, or `{ error: errorMessage, success: false }` on failure.
+  3. Returns `{ error: null, success: true }` and redirects to `/dashboard` if successful, or `{ error: errorMessage, success: false }` on failure.
 
 ### B. `signIn`
 Authenticates an existing user and creates session cookies.

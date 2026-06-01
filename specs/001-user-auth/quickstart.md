@@ -34,9 +34,9 @@ The application will run on [http://localhost:3000](http://localhost:3000).
 ### Test Case 1: Route Protection
 1. Open an incognito browser window.
 2. Try to navigate directly to [http://localhost:3000/dashboard](http://localhost:3000/dashboard).
-3. **Verify**: You should be automatically redirected to [http://localhost:3000/login](http://localhost:3000/login).
+3. **Verify**: You should be automatically redirected to [http://localhost:3000/login](http://localhost:3000/login) (handled via `src/proxy.ts`).
 
-### Test Case 2: Sign Up & User Registration
+### Test Case 2: Sign Up & User Registration (Auto-Login)
 1. Navigate to [http://localhost:3000/register](http://localhost:3000/register).
 2. Enter:
    - Full Name: `Test User`
@@ -44,7 +44,7 @@ The application will run on [http://localhost:3000](http://localhost:3000).
    - Password: `Password123` (Ensure it meets complexity rules)
 3. Submit the form.
 4. **Verify**:
-   - You are redirected to `/dashboard` (if auto-login is active) or see a check email verification prompt.
+   - You are automatically redirected directly to `/dashboard` (auto-login active because Email Confirmation is disabled).
    - Open your Supabase Dashboard -> Table Editor -> `profiles`. Confirm a new profile record exists with `full_name: Test User` and `email: testuser@example.com`.
 
 ### Test Case 3: Sign In & Session persistence
@@ -52,7 +52,7 @@ The application will run on [http://localhost:3000](http://localhost:3000).
 2. Enter the registered credentials: `testuser@example.com` / `Password123`.
 3. Submit.
 4. **Verify**:
-   - You are redirected to `/dashboard` and see "Welcome, testuser@example.com".
+   - You are redirected to `/dashboard` and see your full name.
    - Refresh the page. **Verify**: You remain on `/dashboard` (session is preserved in cookies).
 
 ### Test Case 4: Sign Out

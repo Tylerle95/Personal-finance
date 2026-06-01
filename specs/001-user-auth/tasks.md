@@ -29,9 +29,9 @@
 - [x] T002 Create browser-side Supabase client helper in `src/lib/supabase/client.ts`
 - [x] T003 [P] Create server-side Supabase client helper in `src/lib/supabase/server.ts`
 - [x] T004 [P] Create middleware session helper client in `src/lib/supabase/middleware.ts`
-- [x] T005 Implement route protection and session refresh in Next.js Middleware `src/middleware.ts`
+- [x] T005 Implement route protection and session refresh in Next.js Proxy `src/proxy.ts`
 
-**Checkpoint**: Foundation ready - auth clients and route protection middleware are operational.
+**Checkpoint**: Foundation ready - auth clients and route protection proxy are operational.
 
 ---
 

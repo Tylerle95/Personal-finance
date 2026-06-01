@@ -29,6 +29,7 @@ export async function signUp(prevState: any, formData: FormData) {
     return { error: error.message, success: false, message: null }
   }
 
+  // With email confirmation disabled, a session is immediately returned upon signup
   if (data.session) {
     revalidatePath('/', 'layout')
     redirect('/dashboard')
@@ -37,7 +38,7 @@ export async function signUp(prevState: any, formData: FormData) {
   return {
     error: null,
     success: true,
-    message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.',
+    message: 'Đăng ký thành công! Đang chuyển hướng...',
   }
 }
 

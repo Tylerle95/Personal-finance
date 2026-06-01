@@ -4,7 +4,7 @@
 
 ## Summary
 
-Implement user authentication in the Next.js App Router project using Supabase Auth (`@supabase/ssr` cookie-based session management). This enables secure user registration, login, logout, session persistence, and middleware-based route protection.
+Implement user authentication in the Next.js App Router project using Supabase Auth (`@supabase/ssr` cookie-based session management). This enables secure user registration with immediate auto-login, login, logout, session persistence, and proxy-based route protection.
 
 ## Technical Context
 
@@ -20,18 +20,18 @@ Implement user authentication in the Next.js App Router project using Supabase A
 
 **Project Type**: Next.js App Router Web Application
 
-**Performance Goals**: Page transitions and authentication redirect checks in under 1 second; form validation feedback in under 100ms.
+**Performance Goals**: Page transitions and redirection checks in under 1 second; form validation feedback in under 100ms.
 
 **Constraints**: Row Level Security (RLS) enabled on all database tables. Secure, HTTPOnly, SameSite cookies for cookie-based session persistence.
 
-**Scale/Scope**: Initial authentication MVP supporting email/password registration and logins.
+**Scale/Scope**: Initial authentication MVP supporting direct email/password registration and logins.
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - [x] **Principle I: Type Safety**: Enforce strict type definitions for all utility functions, Server Action returns, and database operations.
-- [x] **Principle II: Edge Middleware Protection**: Use Next.js Middleware to refresh tokens and validate routes before server component render cycles.
+- [x] **Principle II: Edge Proxy Protection**: Use Next.js Proxy strictly located at `src/proxy.ts` to refresh tokens and validate routes before server component render cycles.
 - [x] **Principle III: Mobile-First UI**: Design forms with responsive grids, minimum 48px tap targets, and no horizontal overflow.
 
 ## Project Structure
@@ -41,7 +41,7 @@ Implement user authentication in the Next.js App Router project using Supabase A
 ```text
 specs/001-user-auth/
 ├── plan.md              # This file
-├── research.md          # Technical decisions and rationale
+├── research.md          # Technical decisions and rationale (including proxy filename)
 ├── data-model.md        # Database schema details and form validation rules
 ├── quickstart.md        # Steps to setup and verify locally
 └── contracts/
@@ -57,7 +57,7 @@ src/
 │   │   ├── login/
 │   │   │   └── page.tsx           # Login page UI and form
 │   │   └── register/
-│   │       └── page.tsx           # Registration page UI and form
+│   │       └── page.tsx           # Registration page UI and form (auto-logs in on success)
 │   ├── dashboard/
 │   │   └── page.tsx               # Dashboard (protected route placeholder)
 │   ├── auth/
@@ -67,7 +67,7 @@ src/
 │   │   └── auth.ts                # Server Actions (signIn, signUp, signOut)
 │   ├── layout.tsx                 # Root layout with metadata and PWA settings
 │   ├── page.tsx                   # Landing page directing to login/dashboard
-│   └── middleware.ts              # Route protection middleware entry point
+│   └── proxy.ts                   # Route protection proxy entry point (Next.js 16 convention)
 ├── components/
 │   └── ui/                        # Reusable premium UI components (Button, Input, Card)
 └── lib/
