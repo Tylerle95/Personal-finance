@@ -1,0 +1,44 @@
+# Cursor Agent Coding Standards & Rules
+
+Chào mừng Agent! Khi làm việc trong dự án **Personal Finance**, bạn phải tuân thủ nghiêm ngặt các quy tắc và tiêu chuẩn chất lượng dưới đây.
+
+---
+
+## 1. THƯ MỤC CHỈ DẪN ƯU TIÊN (RULES & SKILLS)
+Trước khi bắt đầu thực hiện bất kỳ thay đổi nào, bạn phải đọc và tuân thủ các quy tắc chi tiết trong thư mục:
+- **Quy tắc (Rules)**: [Rules Folder](file://./.agents/rules/)
+  * [Quy tắc toàn cục (global-rules.md)](file://./.agents/rules/global-rules.md)
+  * [Quy tắc Next.js (nextjs-rules.md)](file://./.agents/rules/nextjs-rules.md)
+  * [Quy tắc Supabase (supabase-rules.md)](file://./.agents/rules/supabase-rules.md)
+  * [Quy tắc giao diện UI & PWA (ui-rules.md)](file://./.agents/rules/ui-rules.md)
+- **Kỹ năng (Skills)**: [Skills Folder](file://./.agents/skills/)
+  * Chứa các kỹ năng chuyên sâu của dự án (`gitnexus`, `pwa-development`, `supabase-postgres-best-practices`, `tailwindcss-advanced-layouts`, `conventional-commits`...)
+
+---
+
+## 2. QUY CHUẨN KỸ THUẬT CỐT LÕI
+
+### A. Next.js (Chuẩn Vercel)
+- Sử dụng **Next.js 14+ App Router** (`src/app/`).
+- Phân biệt rõ **React Server Components (RSC)** (mặc định) và **Client Components** (`"use client"`). Chỉ sử dụng Client Components khi cần tương tác (state, effects, event listeners).
+- Sử dụng `next/navigation` thay cho `next/router`.
+- Luôn viết code TypeScript an toàn kiểu dữ liệu (Strict type-safety).
+
+### B. Supabase (Bảo mật & Tối ưu)
+- **Kích hoạt RLS**: Mọi bảng mới tạo phải kích hoạt Row Level Security. Người dùng chỉ được truy cập dữ liệu của chính mình (`auth.uid() = user_id`).
+- **An toàn kiểu dữ liệu**: Sử dụng các types được sinh tự động từ database.
+- **Tối ưu hóa**: Tránh truy vấn lặp lại (N+1 query). Sử dụng JOIN trực tiếp bằng lệnh `.select()`. Luôn phân trang cho các danh sách lớn.
+
+### C. Giao diện UI & PWA (Mobile-First)
+- **Mobile-First**: Viết style Tailwind cho màn hình nhỏ trước, sau đó mở rộng bằng breakpoints.
+- **Tối ưu hóa cảm ứng**: Kích thước vùng chạm tối thiểu **48px**. Vô hiệu hóa hover trên thiết bị di động.
+- **Cấu hình PWA**: Đảm bảo tệp `manifest.json` và thẻ meta viewport ngăn phóng to tự động trên input.
+
+---
+
+## 3. QUY TRÌNH LÀM VIỆC & COMMIT
+1. **Phân tích tác động (GitNexus)**: Luôn chạy phân tích tác động trước khi sửa đổi các hàm/logic lõi để tránh làm hỏng các phần khác.
+2. **Quy tắc "No Placeholder"**: Không bao giờ viết mã giả, comment TODO. Mọi thay đổi phải hoàn chỉnh, xử lý lỗi đầy đủ và sẵn sàng chạy production.
+3. **Conventional Commits**: Commit message bắt buộc tuân thủ chuẩn Conventional Commits 1.0.0.
+   - Định dạng: `<type>(<scope>): <description>` (ví dụ: `feat(dashboard): add monthly chart`).
+   - Các type hợp lệ: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
