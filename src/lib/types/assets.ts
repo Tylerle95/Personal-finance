@@ -62,6 +62,7 @@ export interface NetWorthSummary {
 export const PREDEFINED_COLORS = [
   { name: 'Teal', hex: '#0d9488' },
   { name: 'Violet', hex: '#7c3aed' },
+  { name: 'Gold', hex: '#d4af37' },
   { name: 'Amber', hex: '#d97706' },
   { name: 'Green', hex: '#16a34a' },
   { name: 'Blue', hex: '#2563eb' },
