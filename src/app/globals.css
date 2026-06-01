@@ -119,7 +119,7 @@ body {
 .assets-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 4rem;
+  padding: 0 0 3rem 0; /* padding side and top are handled by the shared layout wrapper */
 }
 .assets-page__header {
   display: flex;
