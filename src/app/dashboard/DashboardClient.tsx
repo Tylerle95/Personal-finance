@@ -4,6 +4,7 @@ import React from 'react'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
 import { LogOut, Wallet, ArrowUpRight, ArrowDownRight, LayoutDashboard, Sun, Moon, Globe, Sparkles } from 'lucide-react'
+import RippleButton from '@/components/ui/RippleButton'
 
 interface DashboardClientProps {
   user: {
@@ -50,18 +51,18 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             </span>
 
             {/* Language Toggle */}
-            <button
+            <RippleButton
               onClick={() => setLocale(locale === 'vi' ? 'en' : 'vi')}
-              className="flex items-center justify-center p-2 rounded-lg border dark:border-slate-850 dark:bg-slate-900/60 dark:hover:bg-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all duration-200 active:scale-[0.96] cursor-pointer"
+              className="flex items-center justify-center p-2 rounded-lg border dark:border-slate-850 dark:bg-slate-900/60 dark:hover:bg-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all duration-205 active:scale-[0.96] cursor-pointer"
               title="Switch Language"
             >
               <Globe className="h-4 w-4 text-violet-500" />
-            </button>
+            </RippleButton>
 
             {/* Theme Toggle */}
-            <button
+            <RippleButton
               onClick={toggleTheme}
-              className="flex items-center justify-center p-2 rounded-lg border dark:border-slate-850 dark:bg-slate-900/60 dark:hover:bg-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all duration-200 active:scale-[0.96] cursor-pointer"
+              className="flex items-center justify-center p-2 rounded-lg border dark:border-slate-850 dark:bg-slate-900/60 dark:hover:bg-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all duration-205 active:scale-[0.96] cursor-pointer"
               title="Toggle Theme"
             >
               {theme === 'dark' ? (
@@ -69,17 +70,17 @@ export default function DashboardClient({ user }: DashboardClientProps) {
               ) : (
                 <Moon className="h-4 w-4 text-violet-600" />
               )}
-            </button>
+            </RippleButton>
 
             {/* Logout Form */}
             <form action={signOut}>
-              <button
+              <RippleButton
                 type="submit"
-                className="flex items-center gap-2 text-xs font-semibold dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 dark:bg-slate-900/60 bg-slate-100 hover:bg-red-500/15 dark:hover:bg-red-500/15 border dark:border-slate-800 border-slate-200 px-3.5 py-2 rounded-lg transition-all duration-200 active:scale-[0.96] cursor-pointer"
+                className="flex items-center gap-2 text-xs font-semibold dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 dark:bg-slate-900/60 bg-slate-100 hover:bg-red-500/15 dark:hover:bg-red-500/15 border dark:border-slate-800 border-slate-200 px-3.5 py-2 rounded-lg transition-all duration-205 active:scale-[0.96] cursor-pointer"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 <span>{t('signOut')}</span>
-              </button>
+              </RippleButton>
             </form>
           </div>
         </div>
@@ -160,12 +161,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             {t('dashboardEmptyStateDesc')}
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3.5">
-            <button className="w-full sm:w-auto rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/15 hover:from-violet-500 hover:to-indigo-500 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+            <RippleButton className="w-full sm:w-auto rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/15 hover:from-violet-500 hover:to-indigo-500 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
               {t('addTransaction')}
-            </button>
-            <button className="w-full sm:w-auto rounded-xl dark:bg-slate-900/60 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 border dark:border-slate-800 border-slate-200 text-sm font-bold dark:text-slate-300 text-slate-700 px-5 py-2.5 shadow-sm transition-all duration-200 active:scale-[0.96] cursor-pointer">
+            </RippleButton>
+            <RippleButton className="w-full sm:w-auto rounded-xl dark:bg-slate-900/60 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 border dark:border-slate-800 border-slate-200 text-sm font-bold dark:text-slate-300 text-slate-700 px-5 py-2.5 shadow-sm transition-all duration-200 active:scale-[0.96] cursor-pointer">
               {t('manageCategories')}
-            </button>
+            </RippleButton>
           </div>
         </div>
       </main>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { signIn } from '@/app/actions/auth'
 import { useLanguage } from '@/components/providers'
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react'
+import RippleButton from '@/components/ui/RippleButton'
 
 const initialState = {
   error: null as string | null,
@@ -44,17 +45,17 @@ export default function LoginPage() {
             autoComplete="email"
             required
             placeholder=" "
-            className="peer block w-full rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-950/40 bg-white/40 pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 placeholder-transparent"
+            className="peer block w-full rounded-xl border dark:border-slate-800/80 border-slate-200 dark:bg-slate-950/60 bg-white pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-fuchsia-500 dark:focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-500/20 placeholder-transparent shadow-xs"
           />
           <div className="pointer-events-none absolute top-4.5 left-3 flex items-center">
-            <Mail className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-violet-500" />
+            <Mail className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-fuchsia-500" />
           </div>
           <label
             htmlFor="email"
             className="pointer-events-none absolute left-10 top-3 text-xs font-semibold text-slate-400 dark:text-slate-500 transition-all duration-250 
                        peer-placeholder-shown:text-sm peer-placeholder-shown:top-4.5 peer-placeholder-shown:font-normal
-                       peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-violet-500 peer-focus:font-semibold
-                       peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-violet-500 peer-[&:not(:placeholder-shown)]:font-semibold"
+                       peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-fuchsia-500 peer-focus:font-semibold
+                       peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-fuchsia-500 peer-[&:not(:placeholder-shown)]:font-semibold"
           >
             {t('email')}
           </label>
@@ -70,17 +71,17 @@ export default function LoginPage() {
               autoComplete="current-password"
               required
               placeholder=" "
-              className="peer block w-full rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-950/40 bg-white/40 pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 placeholder-transparent"
+              className="peer block w-full rounded-xl border dark:border-slate-800/80 border-slate-200 dark:bg-slate-950/60 bg-white pt-6 pb-2 pl-10 pr-3 text-sm dark:text-white text-slate-900 outline-none transition-all duration-200 focus:border-fuchsia-500 dark:focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-500/20 placeholder-transparent shadow-xs"
             />
             <div className="pointer-events-none absolute top-4.5 left-3 flex items-center">
-              <Lock className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-violet-500" />
+              <Lock className="h-4 w-4 text-slate-500 transition-colors duration-200 peer-focus:text-fuchsia-500" />
             </div>
             <label
               htmlFor="password"
               className="pointer-events-none absolute left-10 top-3 text-xs font-semibold text-slate-400 dark:text-slate-500 transition-all duration-250 
                          peer-placeholder-shown:text-sm peer-placeholder-shown:top-4.5 peer-placeholder-shown:font-normal
-                         peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-violet-500 peer-focus:font-semibold
-                         peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-violet-500 peer-[&:not(:placeholder-shown)]:font-semibold"
+                         peer-focus:text-xs peer-focus:top-1.5 peer-focus:text-fuchsia-500 peer-focus:font-semibold
+                         peer-[&:not(:placeholder-shown)]:text-xs peer-[&:not(:placeholder-shown)]:top-1.5 peer-[&:not(:placeholder-shown)]:text-fuchsia-500 peer-[&:not(:placeholder-shown)]:font-semibold"
             >
               {t('password')}
             </label>
@@ -89,7 +90,7 @@ export default function LoginPage() {
           <div className="flex justify-end px-1">
             <a
               href="#"
-              className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 transition-colors duration-150"
+              className="text-xs font-semibold text-fuchsia-600 dark:text-fuchsia-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-300 transition-colors duration-150"
             >
               {t('forgotPassword')}
             </a>
@@ -97,10 +98,10 @@ export default function LoginPage() {
         </div>
 
         {/* Premium Action Button */}
-        <button
+        <RippleButton
           type="submit"
           disabled={isPending}
-          className="relative flex w-full justify-center items-center gap-2 rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-600/25 hover:from-violet-500 hover:to-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+          className="relative flex w-full justify-center items-center gap-2 rounded-xl bg-linear-to-r from-violet-600 via-fuchsia-600 to-pink-500 px-4 py-3 text-sm font-bold text-white shadow-xl shadow-fuchsia-500/20 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-250 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
         >
           {isPending ? (
             <>
@@ -110,7 +111,7 @@ export default function LoginPage() {
           ) : (
             t('loginButton')
           )}
-        </button>
+        </RippleButton>
       </form>
 
       <p className="mt-6 text-center text-sm dark:text-slate-400 text-slate-500">
