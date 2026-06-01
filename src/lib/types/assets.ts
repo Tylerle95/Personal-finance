@@ -18,6 +18,7 @@ export interface AssetAccount {
   quantity: number
   unit_price: number
   currency: string
+  purchase_date: string
   description: string | null
   total_value: number // computed: quantity × unit_price
   created_at: string

@@ -41,9 +41,11 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [categoryColor, setCategoryColor] = useState(PREDEFINED_COLORS[0].hex)
   const [categoryIcon, setCategoryIcon] = useState(PREDEFINED_ICONS[0])
 
-  // Form fields for live preview
+  // Form fields for live preview and conditional inputs
   const [previewQty, setPreviewQty] = useState('')
   const [previewPrice, setPreviewPrice] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedCurrency, setSelectedCurrency] = useState('VND')
 
   const formRef = useRef<HTMLFormElement>(null)
   const categoryFormRef = useRef<HTMLFormElement>(null)
@@ -74,6 +76,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setSelectedAccount(null)
     setPreviewQty('')
     setPreviewPrice('')
+    setSelectedCategoryId(categories[0]?.id || '')
+    setSelectedCurrency('VND')
     setModalMode('create')
   }
 
@@ -81,6 +85,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setSelectedAccount(account)
     setPreviewQty(String(account.quantity))
     setPreviewPrice(String(account.unit_price))
+    setSelectedCategoryId(account.category_id)
+    setSelectedCurrency(account.currency)
     setModalMode('edit')
   }
 
@@ -99,6 +105,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setSelectedAccount(null)
     setPreviewQty('')
     setPreviewPrice('')
+    setSelectedCategoryId('')
+    setSelectedCurrency('VND')
     formRef.current?.reset()
   }
 
@@ -119,9 +127,16 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setCategoryIcon(cat.icon)
   }
 
+  const activeCategory = categories.find((c) => c.id === selectedCategoryId) || categories[0]
+  const isCashCategory = activeCategory ? /tiền mặt|ngân hàng|cash|bank|ví/i.test(activeCategory.name) : false
+
   const liveTotal =
-    parseFloat(previewQty) > 0 && parseFloat(previewPrice) >= 0
-      ? parseFloat(previewQty) * parseFloat(previewPrice)
+    parseFloat(previewQty) > 0
+      ? (isCashCategory
+          ? parseFloat(previewQty)
+          : parseFloat(previewPrice) >= 0
+            ? parseFloat(previewQty) * parseFloat(previewPrice)
+            : null)
       : null
 
   const isPending = createPending || updatePending || deletePending
@@ -219,7 +234,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
               {/* Name */}
               <div className="form-field">
                 <label className="form-label" htmlFor="asset-name">
-                  Tên tài sản <span className="required">*</span>
+                  Tên tài sản <span className="optional">(tùy chọn, mặc định lấy tên danh mục)</span>
                 </label>
                 <input
                   id="asset-name"
@@ -228,7 +243,6 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                   className="form-input"
                   defaultValue={selectedAccount?.name ?? ''}
                   placeholder="VD: SJC Gold, Bitcoin, FPT Stock..."
-                  required
                   maxLength={100}
                 />
               </div>
@@ -242,7 +256,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                   id="asset-category" 
                   name="category_id" 
                   className="form-select" 
-                  defaultValue={selectedAccount?.category_id ?? categories[0]?.id}
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
                   required
                 >
                   {categories.map((cat) => (
@@ -253,49 +268,123 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 </select>
               </div>
 
-              {/* Quantity */}
+              {/* Currency Selector */}
               <div className="form-field">
-                <label className="form-label" htmlFor="asset-quantity">
-                  Số lượng <span className="required">*</span>
+                <label className="form-label" htmlFor="asset-currency">
+                  Tiền tệ <span className="required">*</span>
+                </label>
+                <select
+                  id="asset-currency"
+                  name="currency"
+                  className="form-select"
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  required
+                >
+                  <option value="VND">VND (đ)</option>
+                  <option value="USD">USD ($)</option>
+                </select>
+              </div>
+
+              {/* Purchase Date */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="asset-purchase-date">
+                  Ngày mua / Ngày sở hữu <span className="required">*</span>
                 </label>
                 <input
-                  id="asset-quantity"
-                  name="quantity"
-                  type="number"
+                  id="asset-purchase-date"
+                  name="purchase_date"
+                  type="date"
                   className="form-input"
-                  value={previewQty}
-                  onChange={(e) => setPreviewQty(e.target.value)}
-                  step="any"
-                  min="0"
-                  placeholder="0"
+                  defaultValue={
+                    selectedAccount 
+                      ? selectedAccount.purchase_date.split('T')[0] 
+                      : new Date().toISOString().split('T')[0]
+                  }
                   required
                 />
               </div>
 
-              {/* Unit price */}
-              <div className="form-field">
-                <label className="form-label" htmlFor="asset-unit-price">
-                  Đơn giá (VND) <span className="required">*</span>
-                </label>
-                <input
-                  id="asset-unit-price"
-                  name="unit_price"
-                  type="number"
-                  className="form-input"
-                  value={previewPrice}
-                  onChange={(e) => setPreviewPrice(e.target.value)}
-                  step="any"
-                  min="0"
-                  placeholder="0"
-                  required
-                />
-              </div>
+              {/* Dynamic inputs: Cash Category vs Investment Category */}
+              {isCashCategory ? (
+                <>
+                  <input type="hidden" name="unit_price" value="1" />
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-balance">
+                      Số dư / Giá trị <span className="required">*</span>
+                    </label>
+                    <input
+                      id="asset-balance"
+                      name="quantity"
+                      type="number"
+                      className="form-input"
+                      value={previewQty}
+                      onChange={(e) => setPreviewQty(e.target.value)}
+                      step="any"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Quantity */}
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-quantity">
+                      Số lượng <span className="required">*</span>
+                    </label>
+                    <input
+                      id="asset-quantity"
+                      name="quantity"
+                      type="number"
+                      className="form-input"
+                      value={previewQty}
+                      onChange={(e) => setPreviewQty(e.target.value)}
+                      step="any"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+
+                  {/* Unit price */}
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-unit-price">
+                      Đơn giá ({selectedCurrency}) <span className="required">*</span>
+                    </label>
+                    <input
+                      id="asset-unit-price"
+                      name="unit_price"
+                      type="number"
+                      className="form-input"
+                      value={previewPrice}
+                      onChange={(e) => setPreviewPrice(e.target.value)}
+                      step="any"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Live total preview */}
               {liveTotal !== null && (
                 <div className="form-preview">
-                  <span className="form-preview__label">Tổng giá trị ước tính</span>
-                  <span className="form-preview__value">{VND.format(liveTotal)}</span>
+                  <span className="form-preview__label">Tổng giá trị ước tính (VND)</span>
+                  <span className="form-preview__value font-bold text-slate-800 dark:text-slate-100">
+                    {selectedCurrency === 'USD' ? (
+                      <>
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(liveTotal)}
+                        <span className="text-xs text-slate-400 block mt-0.5 font-normal">
+                          ≈ {VND.format(liveTotal * 25000)} (Tỷ giá cố định 25.000đ)
+                        </span>
+                      </>
+                    ) : (
+                      VND.format(liveTotal)
+                    )}
+                  </span>
                 </div>
               )}
 

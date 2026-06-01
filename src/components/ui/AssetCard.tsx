@@ -1,7 +1,7 @@
 'use client'
 
 import { AssetAccount } from '@/lib/types/assets'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Calendar } from 'lucide-react'
 import * as Icons from 'lucide-react'
 
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -24,6 +24,7 @@ export default function AssetCard({ account, onEdit, onDelete }: AssetCardProps)
   const category = account.category
   const categoryColor = category?.color || '#94a3b8'
   const categoryName = category?.name || 'Chưa phân loại'
+  const isCashCategory = categoryName ? /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName) : false
   
   // Resolve Lucide icon component dynamically
   const IconComponent = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[category?.icon || 'Wallet'] || Icons.Wallet
@@ -75,26 +76,67 @@ export default function AssetCard({ account, onEdit, onDelete }: AssetCardProps)
 
       {/* Price details */}
       <div className="asset-card__details">
-        <div className="asset-card__detail-row">
-          <span className="asset-card__detail-label">Số lượng</span>
-          <span className="asset-card__detail-value">
-            {formatQuantity(account.quantity)}
-          </span>
-        </div>
-        <div className="asset-card__detail-row">
-          <span className="asset-card__detail-label">Đơn giá</span>
-          <span className="asset-card__detail-value">{VND.format(account.unit_price)}</span>
-        </div>
+        {isCashCategory ? (
+          <div className="asset-card__detail-row">
+            <span className="asset-card__detail-label">Số dư</span>
+            <span className="asset-card__detail-value">
+              {account.currency === 'USD' 
+                ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.quantity) 
+                : VND.format(account.quantity)}
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="asset-card__detail-row">
+              <span className="asset-card__detail-label">Số lượng</span>
+              <span className="asset-card__detail-value">
+                {formatQuantity(account.quantity)}
+              </span>
+            </div>
+            <div className="asset-card__detail-row">
+              <span className="asset-card__detail-label">Đơn giá</span>
+              <span className="asset-card__detail-value">
+                {account.currency === 'USD' 
+                  ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.unit_price) 
+                  : VND.format(account.unit_price)}
+              </span>
+            </div>
+          </>
+        )}
+
+        {/* Purchase Date */}
+        {account.purchase_date && (
+          <div className="asset-card__detail-row">
+            <span className="asset-card__detail-label flex items-center gap-1">
+              <Calendar size={13} className="inline opacity-60" /> Ngày sở hữu
+            </span>
+            <span className="asset-card__detail-value text-xs text-slate-500 dark:text-slate-400">
+              {new Date(account.purchase_date).toLocaleDateString('vi-VN')}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Total value */}
-      <div className="asset-card__total">
+      <div className="asset-card__total flex items-center justify-between">
         <span className="asset-card__total-label">Tổng giá trị</span>
-        <span className="asset-card__total-value" style={{ color: categoryColor }}>
-          {VND.format(account.total_value)}
-        </span>
+        <div className="text-right">
+          {account.currency === 'USD' ? (
+            <>
+              <span className="asset-card__total-value block leading-none font-bold" style={{ color: categoryColor }}>
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.quantity * account.unit_price)}
+              </span>
+              <span className="text-[10px] text-slate-400 block mt-1 font-medium">
+                ≈ {VND.format(account.total_value)}
+              </span>
+            </>
+          ) : (
+            <span className="asset-card__total-value font-bold" style={{ color: categoryColor }}>
+              {VND.format(account.total_value)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
 }
-

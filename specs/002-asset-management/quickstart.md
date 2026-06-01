@@ -31,6 +31,7 @@ CREATE TABLE public.asset_accounts (
     quantity NUMERIC NOT NULL DEFAULT 0,
     unit_price NUMERIC NOT NULL DEFAULT 0,
     currency VARCHAR(10) NOT NULL DEFAULT 'VND',
+    purchase_date DATE NOT NULL DEFAULT CURRENT_DATE,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -69,18 +70,36 @@ CREATE POLICY "Users can manage their own accounts"
 ### Scenario 2: Adding an Asset Account under a Custom Category
 1. From `/dashboard/assets`, click **Thêm tài sản**.
 2. Fill out the form:
-   - Name: `SJC Gold`
+   - Name: `SJC Gold` (or leave empty to test defaulting to "Vàng miếng")
    - Category: Select `Vàng miếng`
    - Quantity: `5`
    - Unit Price: `90,000,000`
+   - Currency: `VND`
+   - Purchase Date: Select the actual purchase date (e.g. yesterday)
 3. Verify that the estimated total preview updates dynamically to `450,000,000 ₫`.
 4. Click **Thêm tài sản** to save.
-5. Verify that the asset card displays under `/dashboard/assets` with the custom `Coins` icon and the total value.
+5. Verify that the asset card displays under `/dashboard/assets` with the custom `Coins` icon, the total value, and the purchase date.
 
-### Scenario 3: Dashboard Summary and Allocation Chart
+### Scenario 3: Dashboard Summary and Allocation Chart (with Multi-currency)
 1. Add another category: `Crypto Altcoins` with Blue color (`#2563eb`) and `Bitcoin` icon.
-2. Add an asset account under `Crypto Altcoins`: Name `Ethereum`, quantity `2.5`, price `85,000,000`.
+2. Add an asset account under `Crypto Altcoins`: Name `Ethereum`, quantity `2.5`, price `85,000,000`, Currency `VND`.
 3. Go to the Main Dashboard (`/dashboard`).
 4. Verify:
    - Total Net Worth is calculated as `662,500,000 ₫` (`450,000,000 + 212,500,000`).
    - The Allocation Chart displays 2 slices: `Vàng miếng` (approx. 67.9%) and `Crypto Altcoins` (approx. 32.1%).
+
+### Scenario 4: Dynamic Fields for Cash/Bank and USD Conversion
+1. Add another category: `Tài khoản ngân hàng` with Teal color (`#0d9488`) and `Landmark` icon.
+2. Click **Thêm tài sản** and select the category `Tài khoản ngân hàng`.
+3. Verify that:
+   - The "Số lượng" (Quantity) and "Đơn giá" (Unit Price) fields collapse/hide.
+   - A single field **"Số dư / Giá trị"** (Balance / Value) appears.
+4. Fill out the form:
+   - Name: Leave blank (should default to "Tài khoản ngân hàng" on save)
+   - Balance: `5,000`
+   - Currency: Select `USD`
+   - Purchase Date: Default to today
+5. Click **Thêm tài sản** to save.
+6. Verify that the asset account displays under `/dashboard/assets` with the name `"Tài khoản ngân hàng"`, currency `"USD"`, and total value converted to VND: `125,000,000 ₫` (`5,000 * 25,000`).
+7. Go to `/dashboard` and verify that the Total Net Worth now includes the USD asset converted to VND: `787,500,000 ₫`.
+

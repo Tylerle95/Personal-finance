@@ -32,16 +32,22 @@
 #### `createAssetAccount`
 - **Arguments**:
   - `prevState`: `ActionResult`
-  - `formData`: `FormData` (containing `name`, `category_id`, `quantity`, `unit_price`, `description`)
+  - `formData`: `FormData` (containing `name` (optional), `category_id`, `quantity`, `unit_price`, `currency`, `purchase_date`, `description`)
 - **Return Type**: `Promise<ActionResult>`
-- **Behavior**: Validates inputs. Inserts the row into `asset_accounts`. Revalidates paths.
+- **Behavior**: 
+  - If `name` is empty, defaults it to the associated Category's name.
+  - If the associated Category is a cash/bank category, sets `unit_price = 1` and `quantity = [Value/Balance]`.
+  - Validates that `quantity` and `unit_price` are non-negative.
+  - Defaults `currency` to `"VND"` if not specified (supports `"VND"` or `"USD"`).
+  - Defaults `purchase_date` to today's date if not specified (format `YYYY-MM-DD`).
+  - Inserts the row into `asset_accounts`. Revalidates paths `/dashboard/assets` and `/dashboard`.
 
 #### `updateAssetAccount`
 - **Arguments**:
   - `prevState`: `ActionResult`
-  - `formData`: `FormData` (containing `id`, `name`, `category_id`, `quantity`, `unit_price`, `description`)
+  - `formData`: `FormData` (containing `id`, `name` (optional), `category_id`, `quantity`, `unit_price`, `currency`, `purchase_date`, `description`)
 - **Return Type**: `Promise<ActionResult>`
-- **Behavior**: Updates account details. Revalidates paths.
+- **Behavior**: Updates details of an existing account with the provided fields. Applies the same default/optional logic as creation if updated. Revalidates paths `/dashboard/assets` and `/dashboard`.
 
 #### `deleteAssetAccount`
 - **Arguments**:

@@ -35,9 +35,28 @@
   - `updateAssetCategory(prevState, formData)`
   - `deleteAssetCategory(prevState, formData)`
 - Update existing asset account actions to require `category_id` instead of `type`.
+- Account actions must support optional `name` (falling back to Category Name), `currency` (VND/USD), and `purchase_date` (DATE).
 
 ### 4. UI Access & Management flow
 - **Decision**: A Modal/Section within the `/dashboard/assets` screen that displays when the user clicks "Manage Categories". This screen will let the user add, edit, or delete categories. When creating or editing an asset, a select dropdown will fetch and show user's custom categories. If the category list is empty, display a clear CTA to create a category first.
+
+### 5. Multi-Currency Support (VND / USD)
+- **Decision**: Allow users to select either `VND` or `USD` as the currency when adding/editing assets.
+- **Valuation / Net Worth**: Under the hood, Net Worth and allocation charts are displayed in `VND`. If an asset is in `USD`, the system automatically converts its total valuation to VND using a fixed rate of **1 USD = 25,000 VND**.
+- **Rationale**: Keeps currency calculations predictable and avoids external exchange API rate dependencies for the MVP.
+
+### 6. Dynamic Form Fields (Cash/Savings vs Investments)
+- **Decision**: Dynamically adapt inputs in the Add/Edit Asset modal based on the selected category's name.
+- **Logic**: If the category name contains keywords like `"Tiền mặt"`, `"Ngân hàng"`, `"Cash"`, `"Bank"`, `"Ví"`, the form displays a single **"Balance / Value"** input. Under the hood, this sets `quantity = [Value]` and `unit_price = 1`. For other categories (e.g. Stocks, Gold, Crypto), it displays separate **"Quantity"** and **"Unit Price"** inputs.
+- **Rationale**: Provides a more natural user experience (no more entering unit price = 1 for savings accounts).
+
+### 7. Optional Asset Name
+- **Decision**: The "Tên tài sản" (Asset Name) field is optional in the UI. If left empty, it defaults to the name of the selected Asset Category.
+- **Rationale**: Users who only have one asset per category (e.g. one gold holding, or one bank account) don't have to enter redundant name strings.
+
+### 8. Purchase Date Column
+- **Decision**: Store a `purchase_date` of type `DATE` for each asset, defaulting to the current date if not specified.
+- **Rationale**: Critical for users to track when they acquired their asset without introducing timezone offsets or time-of-day complexity.
 
 ## Alternatives Considered
 

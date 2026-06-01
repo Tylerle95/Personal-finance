@@ -15,6 +15,16 @@
 - Q: Accessing category management interface → A: Integrated button/tab on Assets screen (`/dashboard/assets`).
 - Q: Initial seeding of categories for new users → A: Empty by default, user must create their first category.
 - Q: Selection of color and icon properties for categories → A: Predefined palette of 8-12 colors and 10-15 finance icons.
+- Q: Currency Selector & Multi-currency Support → A: Fixed Exchange Rate (Add currency selector VND/USD, convert USD to VND using a fixed rate of 25,000 VND).
+- Q: Asset Form Fields for Cash/Bank Accounts vs. Investments → A: Dynamic Form Fields (Hide Quantity/Unit Price and show a single "Balance" field for cash/bank categories, setting unit_price = 1 and quantity = balance under the hood).
+- Q: Status of Asset Transaction History (User Story 3) → A: Defer to Future Phase (User Story 3 is deferred to V2; users will update balances manually by editing asset accounts).
+- Q: Removing "Tên tài sản" (Asset Name) Field → A: Optional Name (Make the field optional; if left blank, it defaults to the Category name).
+- Q: Implementation of "Ngày mua" (Purchase Date) Field → A: Date-Only Field (Store as DATE in Postgres; UI features a date picker defaulting to the current date).
+
+
+
+
+
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -49,7 +59,10 @@ Users see a visual summary of their total net worth and the distribution of thei
 
 ---
 
-### User Story 3 - Asset Transaction History (Priority: P3)
+### User Story 3 - Asset Transaction History (Priority: P3 - DEFERRED)
+
+> [!NOTE]
+> This story is deferred to a future phase (V2) as resolved in clarifications.
 
 Users can record buy/sell transactions on their asset accounts, which automatically adjusts the holdings quantity.
 
@@ -77,18 +90,21 @@ Users can record buy/sell transactions on their asset accounts, which automatica
 - **FR-001**: System MUST allow users to manage (Create, Read, Update, Delete) custom Asset Categories (with Name, Color, and Icon).
 - **FR-002**: System MUST provide a predefined palette of 8-12 colors and 10-15 finance icons for custom categories.
 - **FR-003**: System MUST require each Asset Account to belong to a custom Asset Category.
-- **FR-004**: System MUST allow users to input details for each asset: Name, Category, Quantity, Unit Price, and Currency (defaulting to VND).
+- **FR-004**: System MUST allow users to input details for each asset: Name (optional, defaulting to Category name if blank), Category, Quantity, Unit Price, and Currency (VND or USD).
 - **FR-005**: System MUST calculate and display the total value of each asset account (Quantity × Unit Price).
 - **FR-006**: System MUST calculate and display the user's Total Net Worth (sum of all asset account values).
 - **FR-007**: System MUST support high-precision decimal inputs for asset quantities (up to 8 decimal places).
 - **FR-008**: System MUST show a breakdown visualization (e.g., pie chart or progress bars) representing asset allocation percentages grouped by custom categories.
+- **FR-009**: For USD assets, the system MUST automatically convert the valuation to VND using a fixed exchange rate of 1 USD = 25,000 VND for display in the Net Worth calculation and charts.
+- **FR-010**: System MUST dynamically adapt form fields in the Add/Edit Asset modal. If the category name matches cash/bank keywords (e.g., "Tiền mặt", "Ngân hàng", "Cash", "Bank", "Ví"), it MUST hide "Số lượng" and "Đơn giá" fields, display a single "Số dư / Giá trị" (Balance/Value) field, and store `unit_price = 1` and `quantity = [Balance]` in the database.
+- **FR-011**: System MUST support a "Ngày mua / Ngày sở hữu" (Purchase Date) field for each asset. It MUST default to the current date in the UI and be stored as a `DATE` column in the database.
 
 ### Key Entities *(include if feature involves data)*
 
 - **AssetCategory**: Represents a user'defined asset category.
   - Attributes: `id` (UUID), `user_id` (UUID), `name` (Text), `color` (Text - color code or name), `icon` (Text - icon name), `created_at` (Timestamp).
 - **AssetAccount**: Represents an asset holding or account.
-  - Attributes: `id` (UUID), `user_id` (UUID), `name` (Text), `category_id` (UUID, references `AssetCategory`), `quantity` (Numeric), `unit_price` (Numeric), `currency` (Text), `created_at` (Timestamp).
+  - Attributes: `id` (UUID), `user_id` (UUID), `name` (Text), `category_id` (UUID, references `AssetCategory`), `quantity` (Numeric), `unit_price` (Numeric), `currency` (Text), `purchase_date` (Date), `created_at` (Timestamp).
 - **AssetTransaction** (P3): Represents a log of buying/selling activity.
   - Attributes: `id` (UUID), `account_id` (UUID), `type` (Enum: Buy, Sell), `quantity` (Numeric), `price_per_unit` (Numeric), `transaction_date` (Timestamp).
 
@@ -103,5 +119,5 @@ Users can record buy/sell transactions on their asset accounts, which automatica
 ## Assumptions
 
 - Gold, stocks, and crypto prices are updated manually by the user (no live external API integration for automated asset price updates in MVP).
-- The base display currency for Net Worth calculation is VND.
+- The base display currency for Net Worth calculation is VND. USD assets are converted to VND using a fixed rate of 1 USD = 25,000 VND.
 
