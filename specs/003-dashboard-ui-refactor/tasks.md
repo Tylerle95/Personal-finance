@@ -49,3 +49,6 @@
 - [x] T022 [MODIFY] Clean up [src/app/dashboard/assets/AssetClient.tsx](file:///Users/tylerle/Documents/Me/Personal-finance/src/app/dashboard/assets/AssetClient.tsx) styles to align with the new layout margins and prevent double headers/nav.
 - [x] T023 [MODIFY] Enhance transition effects and styling rules in [src/app/globals.css](file:///Users/tylerle/Documents/Me/Personal-finance/src/app/globals.css) for smooth sidebar width transition.
 - [x] T024 Perform manual verification: test toggles, theme, language, and responsive flow.
+- [x] T025 [NEW] Create loading animation screen in [src/app/dashboard/loading.tsx](file:///Users/tylerle/Documents/Me/Personal-finance/src/app/dashboard/loading.tsx).
+- [x] T026 Perform manual verification for instant tab transitions & loading states.
+
