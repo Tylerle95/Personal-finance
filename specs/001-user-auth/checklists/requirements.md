@@ -1,7 +1,8 @@
-# Specification Quality Checklist: Supabase Authentication Integration
+# Specification Quality Checklist: Supabase Authentication with OTP Verification
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-01
+**Updated**: 2026-06-01
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -32,4 +33,4 @@
 ## Notes
 
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
-- Validated initially: all items pass.
+- **Update 2026-06-01**: Successfully expanded the specification to include Email OTP Verification (`/verify`), adding FR-008, FR-009, and FR-010.
