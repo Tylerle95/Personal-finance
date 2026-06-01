@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
 import { LogOut, Wallet, ArrowUpRight, ArrowDownRight, LayoutDashboard, Sun, Moon, Globe, Sparkles } from 'lucide-react'
@@ -22,6 +23,7 @@ interface DashboardClientProps {
 export default function DashboardClient({ user, netWorthSummary }: DashboardClientProps) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale, t } = useLanguage()
+  const pathname = usePathname()
 
   // Get full name from user metadata or fallback to email local part
   const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || t('fullNamePlaceholder')
@@ -30,11 +32,11 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col relative transition-colors duration-300">
       
       {/* Decorative Glow backgrounds */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 dark:bg-indigo-600/5 bg-indigo-500/3 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-10 left-10 w-80 h-80 dark:bg-violet-600/5 bg-violet-500/3 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 dark:bg-indigo-600/8 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-10 left-10 w-80 h-80 dark:bg-violet-600/8 bg-violet-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Header */}
-      <header className="border-b dark:border-slate-900/60 border-slate-200 bg-background/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300 shadow-sm dark:shadow-none">
+      <header className="border-b border-glass-border bg-glass-bg backdrop-blur-lg sticky top-0 z-50 transition-colors duration-300 shadow-sm dark:shadow-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Logo and Brand */}
@@ -48,11 +50,25 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
               </span>
             </Link>
             
-            <nav className="flex items-center gap-4 ml-2">
-              <Link href="/dashboard" className="text-sm font-bold text-violet-600 dark:text-violet-400">
+            <nav className="hidden sm:flex items-center gap-4 ml-2">
+              <Link
+                href="/dashboard"
+                className={`text-sm font-bold transition-colors ${
+                  pathname === '/dashboard'
+                    ? 'text-primary'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
                 Tổng quan
               </Link>
-              <Link href="/dashboard/assets" className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
+              <Link
+                href="/dashboard/assets"
+                className={`text-sm font-bold transition-colors ${
+                  pathname.startsWith('/dashboard/assets')
+                    ? 'text-primary'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
                 Tài sản
               </Link>
             </nav>
@@ -102,7 +118,7 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 relative animate-fade-in-up">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-28 sm:pb-10 relative animate-fade-in-up">
         
         {/* Welcome Section */}
         <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -126,7 +142,7 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           
           {/* Card 1: Total Balance */}
-          <div className="relative overflow-hidden rounded-2xl dark:bg-slate-900/40 bg-white border dark:border-slate-800/80 border-slate-200/80 p-6 shadow-md dark:shadow-none hover:shadow-lg dark:hover:border-violet-500/30 hover:border-violet-500/20 hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-200">
+          <div className="relative overflow-hidden rounded-2xl bg-glass-bg border border-glass-border p-6 shadow-card-shadow hover:scale-[1.01] hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-lg transition-all duration-300 backdrop-blur-md">
             <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-xl pointer-events-none" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-semibold dark:text-slate-400 text-slate-500">{t('totalBalance')}</span>
@@ -141,7 +157,7 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
           </div>
 
           {/* Card 2: Income Placeholder */}
-          <div className="relative overflow-hidden rounded-2xl dark:bg-slate-900/40 bg-white border dark:border-slate-800/80 border-slate-200/80 p-6 shadow-md dark:shadow-none hover:shadow-lg dark:hover:border-emerald-500/30 hover:border-emerald-500/20 hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-200">
+          <div className="relative overflow-hidden rounded-2xl bg-glass-bg border border-glass-border p-6 shadow-card-shadow hover:scale-[1.01] hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-lg transition-all duration-300 backdrop-blur-md">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-semibold dark:text-slate-400 text-slate-500">{t('monthlyIncome')}</span>
@@ -156,7 +172,7 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
           </div>
 
           {/* Card 3: Expenses Placeholder */}
-          <div className="relative overflow-hidden rounded-2xl dark:bg-slate-900/40 bg-white border dark:border-slate-800/80 border-slate-200/80 p-6 shadow-md dark:shadow-none hover:shadow-lg dark:hover:border-rose-500/30 hover:border-rose-500/20 hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-200">
+          <div className="relative overflow-hidden rounded-2xl bg-glass-bg border border-glass-border p-6 shadow-card-shadow hover:scale-[1.01] hover:-translate-y-1 hover:border-rose-500/40 hover:shadow-lg transition-all duration-300 backdrop-blur-md">
             <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-semibold dark:text-slate-400 text-slate-500">{t('monthlyExpense')}</span>
@@ -192,6 +208,34 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 inset-x-0 bg-glass-bg border-t border-glass-border backdrop-blur-lg z-50 sm:hidden shadow-lg animate-slide-up">
+        <div className="flex justify-around items-center h-16">
+          <Link
+            href="/dashboard"
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-[0.97] cursor-pointer ${
+              pathname === '/dashboard'
+                ? 'text-primary font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-foreground'
+            }`}
+          >
+            <LayoutDashboard className="h-5 w-5" />
+            <span className="text-[10px] tracking-wide">Tổng quan</span>
+          </Link>
+          <Link
+            href="/dashboard/assets"
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-[0.97] cursor-pointer ${
+              pathname.startsWith('/dashboard/assets')
+                ? 'text-primary font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-foreground'
+            }`}
+          >
+            <Wallet className="h-5 w-5" />
+            <span className="text-[10px] tracking-wide">Tài sản</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   )
 }

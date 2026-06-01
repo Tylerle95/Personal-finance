@@ -429,7 +429,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 <div className="form-field">
                   <label className="form-label text-xs">Biểu tượng</label>
                   <input type="hidden" name="icon" value={categoryIcon} />
-                  <div className="grid grid-cols-6 gap-2 border dark:border-slate-800 border-slate-200/80 p-2.5 rounded-lg bg-background max-h-[120px] overflow-y-auto">
+                  <div className="grid grid-cols-6 gap-2 border dark:border-slate-800 border-slate-200/80 p-2.5 rounded-lg bg-background max-h-[120px] overflow-y-auto scrollbar-custom">
                     {PREDEFINED_ICONS.map((iconName) => {
                       const IconComp = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[iconName] || Icons.HelpCircle
                       const isSelected = categoryIcon === iconName
@@ -480,7 +480,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 {categories.length === 0 ? (
                   <p className="text-xs text-slate-400 italic">Chưa có danh mục nào.</p>
                 ) : (
-                  <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-custom">
                     {categories.map((cat) => {
                       const IconComponent = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[cat.icon] || Icons.Wallet
                       return (
