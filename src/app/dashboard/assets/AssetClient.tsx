@@ -207,6 +207,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
             </div>
 
             <form
+              key={selectedAccount?.id ?? 'new'}
               ref={formRef}
               action={modalMode === 'create' ? createAction : updateAction}
               className="modal__form"

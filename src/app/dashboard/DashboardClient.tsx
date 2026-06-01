@@ -8,6 +8,8 @@ import RippleButton from '@/components/ui/RippleButton'
 import NetWorthSummary from '@/components/ui/NetWorthSummary'
 import { NetWorthSummary as NetWorthSummaryType } from '@/lib/types/assets'
 
+const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+
 interface DashboardClientProps {
   user: {
     email?: string
@@ -57,7 +59,7 @@ export default function DashboardClient({ user, netWorthSummary }: DashboardClie
               <Wallet className="h-5 w-5" />
             </div>
           </div>
-          <div className="text-3xl font-bold dark:text-white text-slate-900">0 ₫</div>
+          <div className="text-3xl font-bold dark:text-white text-slate-900">{VND.format(netWorthSummary.totalNetWorth)}</div>
           <div className="mt-2 text-xs dark:text-slate-500 text-slate-400 font-medium">
             {t('lastUpdated')}
           </div>

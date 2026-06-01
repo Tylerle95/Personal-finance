@@ -141,7 +141,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             >
               <LayoutDashboard className={mounted && !isSidebarExpanded ? 'h-5 w-5' : 'h-5 w-5'} />
               <span className={mounted && !isSidebarExpanded ? 'text-[10px] tracking-wide mt-0.5' : 'text-sm font-semibold'}>
-                Tổng quan
+                {t('navOverview')}
               </span>
             </Link>
 
@@ -160,7 +160,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             >
               <Wallet className={mounted && !isSidebarExpanded ? 'h-5 w-5' : 'h-5 w-5'} />
               <span className={mounted && !isSidebarExpanded ? 'text-[10px] tracking-wide mt-0.5' : 'text-sm font-semibold'}>
-                Tài sản
+                {t('navAssets')}
               </span>
             </Link>
           </nav>
@@ -192,7 +192,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             }`}
           >
             <LayoutDashboard className="h-5 w-5" />
-            <span className="text-[10px] tracking-wide">Tổng quan</span>
+            <span className="text-[10px] tracking-wide">{t('navOverview')}</span>
           </Link>
           <Link
             href="/dashboard/assets"
@@ -203,7 +203,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             }`}
           >
             <Wallet className="h-5 w-5" />
-            <span className="text-[10px] tracking-wide">Tài sản</span>
+            <span className="text-[10px] tracking-wide">{t('navAssets')}</span>
           </Link>
         </div>
       </nav>
