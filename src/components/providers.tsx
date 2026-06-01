@@ -101,6 +101,8 @@ const translations = {
     addTransaction: 'Thêm giao dịch mới',
     manageCategories: 'Quản lý danh mục',
     signOut: 'Đăng xuất',
+    navOverview: 'Tổng quan',
+    navAssets: 'Tài sản',
   },
   en: {
     // Auth Shared
@@ -118,7 +120,7 @@ const translations = {
     loginButton: 'Sign In',
     noAccount: "Don't have an account?",
     signUpFree: 'Register for free',
-
+ 
     // Register Page
     registerTitle: 'Create Account',
     registerSubtitle: 'Create a new account to start smart financial planning',
@@ -143,6 +145,8 @@ const translations = {
     addTransaction: 'Add New Transaction',
     manageCategories: 'Manage Categories',
     signOut: 'Sign Out',
+    navOverview: 'Overview',
+    navAssets: 'Assets',
   },
 }
 
