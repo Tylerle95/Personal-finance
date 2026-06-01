@@ -431,7 +431,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                   <input type="hidden" name="icon" value={categoryIcon} />
                   <div className="grid grid-cols-6 gap-2 border dark:border-slate-800 border-slate-200/80 p-2.5 rounded-lg bg-background max-h-[120px] overflow-y-auto">
                     {PREDEFINED_ICONS.map((iconName) => {
-                      const IconComp = (Icons as any)[iconName] || Icons.HelpCircle
+                      const IconComp = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[iconName] || Icons.HelpCircle
                       const isSelected = categoryIcon === iconName
                       return (
                         <button
@@ -482,7 +482,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 ) : (
                   <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
                     {categories.map((cat) => {
-                      const IconComponent = (Icons as any)[cat.icon] || Icons.Wallet
+                      const IconComponent = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[cat.icon] || Icons.Wallet
                       return (
                         <div 
                           key={cat.id} 

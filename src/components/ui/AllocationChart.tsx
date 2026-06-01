@@ -27,7 +27,7 @@ export default function AllocationChart({ allocation }: AllocationChartProps) {
       {/* Legend */}
       <ul className="allocation-legend">
         {allocation.map((item) => {
-          const IconComp = (Icons as any)[item.icon] || Icons.Wallet
+          const IconComp = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[item.icon] || Icons.Wallet
           return (
             <li key={item.category_id} className="allocation-legend__item">
               <span

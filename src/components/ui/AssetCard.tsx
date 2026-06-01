@@ -26,7 +26,7 @@ export default function AssetCard({ account, onEdit, onDelete }: AssetCardProps)
   const categoryName = category?.name || 'Chưa phân loại'
   
   // Resolve Lucide icon component dynamically
-  const IconComponent = (Icons as any)[category?.icon || 'Wallet'] || Icons.Wallet
+  const IconComponent = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[category?.icon || 'Wallet'] || Icons.Wallet
 
   return (
     <div className="asset-card">
