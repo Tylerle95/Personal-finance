@@ -5,6 +5,8 @@ import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
 import { LogOut, Wallet, ArrowUpRight, ArrowDownRight, LayoutDashboard, Sun, Moon, Globe, Sparkles } from 'lucide-react'
 import RippleButton from '@/components/ui/RippleButton'
+import NetWorthSummary from '@/components/ui/NetWorthSummary'
+import { NetWorthSummary as NetWorthSummaryType } from '@/lib/types/assets'
 
 interface DashboardClientProps {
   user: {
@@ -13,9 +15,10 @@ interface DashboardClientProps {
       full_name?: string
     }
   }
+  netWorthSummary: NetWorthSummaryType
 }
 
-export default function DashboardClient({ user }: DashboardClientProps) {
+export default function DashboardClient({ user, netWorthSummary }: DashboardClientProps) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale, t } = useLanguage()
 
@@ -100,6 +103,11 @@ export default function DashboardClient({ user }: DashboardClientProps) {
               {t('overview')}
             </p>
           </div>
+        </div>
+
+        {/* Net Worth Widget */}
+        <div className="mb-8">
+          <NetWorthSummary summary={netWorthSummary} />
         </div>
 
         {/* Financial Cards Grid */}
