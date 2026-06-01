@@ -13,7 +13,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
-Make sure the SQL script in Section 2 of `README.md` has been run on your Supabase project's SQL Editor to set up the `profiles` table, triggers, and Row Level Security (RLS) policies.
+Make sure the SQL script in [data-model.md — SQL Migration Script](./data-model.md#sql-migration-script) has been run on your Supabase project's SQL Editor **before** any other feature migrations. This sets up the `profiles` table, trigger, and RLS policies.
 
 ---
 

@@ -1,10 +1,13 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
 import { LogOut, Wallet, ArrowUpRight, ArrowDownRight, LayoutDashboard, Sun, Moon, Globe, Sparkles } from 'lucide-react'
 import RippleButton from '@/components/ui/RippleButton'
+import NetWorthSummary from '@/components/ui/NetWorthSummary'
+import { NetWorthSummary as NetWorthSummaryType } from '@/lib/types/assets'
 
 interface DashboardClientProps {
   user: {
@@ -13,9 +16,10 @@ interface DashboardClientProps {
       full_name?: string
     }
   }
+  netWorthSummary: NetWorthSummaryType
 }
 
-export default function DashboardClient({ user }: DashboardClientProps) {
+export default function DashboardClient({ user, netWorthSummary }: DashboardClientProps) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale, t } = useLanguage()
 
@@ -34,13 +38,24 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Logo and Brand */}
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-linear-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <span className="text-white font-bold text-lg">F</span>
-            </div>
-            <span className="text-lg font-bold tracking-tight dark:text-white text-slate-900">
-              {t('appName')}
-            </span>
+          <div className="flex items-center gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-linear-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                <span className="text-white font-bold text-lg">F</span>
+              </div>
+              <span className="text-lg font-bold tracking-tight dark:text-white text-slate-900">
+                {t('appName')}
+              </span>
+            </Link>
+            
+            <nav className="flex items-center gap-4 ml-2">
+              <Link href="/dashboard" className="text-sm font-bold text-violet-600 dark:text-violet-400">
+                Tổng quan
+              </Link>
+              <Link href="/dashboard/assets" className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
+                Tài sản
+              </Link>
+            </nav>
           </div>
 
           {/* Action Toolbar */}
@@ -100,6 +115,11 @@ export default function DashboardClient({ user }: DashboardClientProps) {
               {t('overview')}
             </p>
           </div>
+        </div>
+
+        {/* Net Worth Widget */}
+        <div className="mb-8">
+          <NetWorthSummary summary={netWorthSummary} />
         </div>
 
         {/* Financial Cards Grid */}
@@ -164,9 +184,11 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             <RippleButton className="w-full sm:w-auto rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/15 hover:from-violet-500 hover:to-indigo-500 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
               {t('addTransaction')}
             </RippleButton>
-            <RippleButton className="w-full sm:w-auto rounded-xl dark:bg-slate-900/60 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 border dark:border-slate-800 border-slate-200 text-sm font-bold dark:text-slate-300 text-slate-700 px-5 py-2.5 shadow-sm transition-all duration-200 active:scale-[0.96] cursor-pointer">
-              {t('manageCategories')}
-            </RippleButton>
+            <Link href="/dashboard/assets" className="w-full sm:w-auto">
+              <RippleButton className="w-full rounded-xl dark:bg-slate-900/60 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 border dark:border-slate-800 border-slate-200 text-sm font-bold dark:text-slate-300 text-slate-700 px-5 py-2.5 shadow-sm transition-all duration-200 active:scale-[0.96] cursor-pointer">
+                {t('manageCategories')}
+              </RippleButton>
+            </Link>
           </div>
         </div>
       </main>

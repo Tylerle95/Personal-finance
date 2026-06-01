@@ -40,3 +40,50 @@ Validation occurs client-side for immediate user feedback and server-side inside
 |-------|------|----------|-------|---------------|
 | `email` | String | Yes | Non-empty | "Email là bắt buộc." |
 | `password` | String | Yes | Non-empty | "Mật khẩu là bắt buộc." |
+
+---
+
+## SQL Migration Script
+
+> ⚠️ **Phải chạy trước migration của các feature khác** (e.g., `002-asset-management`). Bảng `profiles` là dependency của toàn bộ dự án.
+
+Chạy script sau trong **Supabase Dashboard → SQL Editor**:
+
+```sql
+-- 1. Tạo bảng profiles đồng bộ với auth.users
+create table public.profiles (
+  id uuid references auth.users(id) on delete cascade primary key,
+  email text unique not null,
+  full_name text,
+  created_at timestamptz default now() not null
+);
+
+-- 2. Enable RLS
+alter table public.profiles enable row level security;
+
+create policy "Users can view their own profile"
+  on public.profiles for select
+  using (auth.uid() = id);
+
+create policy "Users can update their own profile"
+  on public.profiles for update
+  using (auth.uid() = id);
+
+-- 3. Trigger: tự động tạo profile khi user đăng ký mới
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, full_name)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'full_name'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```

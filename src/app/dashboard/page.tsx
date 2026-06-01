@@ -2,6 +2,7 @@ import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
+import { getUserAssetAccounts, getNetWorthSummary } from '@/lib/data/assets'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -13,6 +14,8 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  return <DashboardClient user={user} />
-}
+  const accounts = await getUserAssetAccounts(user.id)
+  const netWorthSummary = getNetWorthSummary(accounts)
 
+  return <DashboardClient user={user} netWorthSummary={netWorthSummary} />
+}
