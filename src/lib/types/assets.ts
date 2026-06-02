@@ -6,6 +6,7 @@ export interface AssetCategory {
   name: string
   color: string // Hex code, e.g. '#7c3aed'
   icon: string  // Lucide icon name, e.g. 'Wallet'
+  type: 'asset' | 'spending'
   created_at: string
   updated_at: string
 }
@@ -30,14 +31,22 @@ export interface AssetAccount {
 
 export interface AssetTransaction {
   id: string
-  account_id: string
   user_id: string
-  type: 'buy' | 'sell'
+  account_id: string
+  source_account_id: string | null
+  type: 'income' | 'expense' | 'buy' | 'sell' | 'transfer'
+  category_id: string | null
+  amount: number
   quantity: number
   price_per_unit: number
+  currency: string
   transaction_date: string
-  notes: string | null
+  description: string | null
   created_at: string
+  updated_at: string
+  account?: AssetAccount
+  source_account?: AssetAccount
+  category?: AssetCategory
 }
 
 export interface ActionResult {

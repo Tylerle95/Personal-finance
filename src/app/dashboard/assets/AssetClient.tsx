@@ -38,6 +38,11 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [modalMode, setModalMode] = useState<ModalMode>(null)
   const [selectedAccount, setSelectedAccount] = useState<AssetAccount | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
+
+  const walletAccounts = accounts.filter((acc) => {
+    const catName = acc.category?.name || ''
+    return /tiền mặt|ngân hàng|cash|bank|ví/i.test(catName)
+  })
   
   // Category editor states
   const [isEditingCategory, setIsEditingCategory] = useState(false)
@@ -637,6 +642,23 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                       placeholder="BTC, HPG, SJC..."
                     />
                   </div>
+
+                  {/* Payment Source selection */}
+                  {modalMode === 'create' && walletAccounts.length > 0 && (
+                    <div className="form-field">
+                      <label className="form-label" htmlFor="asset-source-wallet">
+                        Nguồn thanh toán <span className="optional">(tùy chọn, tự động trừ số dư ví này)</span>
+                      </label>
+                      <select id="asset-source-wallet" name="source_account_id" className="form-select">
+                        <option value="">-- Không trừ ví (tạo độc lập) --</option>
+                        {walletAccounts.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name} (Số dư: {w.currency === 'USD' ? '$' : '₫'}{Number(w.quantity).toLocaleString('vi-VN')} {w.currency})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </>
               )}
 

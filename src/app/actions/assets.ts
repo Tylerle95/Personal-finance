@@ -25,6 +25,7 @@ export async function createAssetCategory(
   const name = (formData.get('name') as string)?.trim()
   const color = (formData.get('color') as string)?.trim()
   const icon = (formData.get('icon') as string)?.trim()
+  const type = (formData.get('type') as string)?.trim() || 'asset'
 
   // Validation
   if (!name) {
@@ -36,6 +37,9 @@ export async function createAssetCategory(
   if (!icon || !PREDEFINED_ICONS.includes(icon)) {
     return { error: 'Biểu tượng không hợp lệ.', success: false, message: null }
   }
+  if (type !== 'asset' && type !== 'spending') {
+    return { error: 'Loại danh mục không hợp lệ.', success: false, message: null }
+  }
 
   const { data, error } = await supabase
     .from('asset_categories')
@@ -44,6 +48,7 @@ export async function createAssetCategory(
       name,
       color,
       icon,
+      type,
     })
     .select('id')
     .single()
@@ -183,6 +188,7 @@ export async function createAssetAccount(
   const currency = (formData.get('currency') as string)?.trim() || 'VND'
   const purchaseDate = (formData.get('purchase_date') as string)?.trim() || new Date().toISOString().split('T')[0]
   const description = (formData.get('description') as string)?.trim() || null
+  const sourceAccountId = (formData.get('source_account_id') as string)?.trim() || null
 
   if (!categoryId) {
     return { error: 'Vui lòng chọn danh mục tài sản.', success: false, message: null }
@@ -233,6 +239,21 @@ export async function createAssetAccount(
     return { error: 'Ngày mua không hợp lệ.', success: false, message: null }
   }
 
+  // If funding source wallet is selected, fetch it and check balance
+  let sourceAccount = null
+  if (sourceAccountId) {
+    const { data: sa, error: saError } = await supabase
+      .from('asset_accounts')
+      .select('id, quantity, currency, name')
+      .eq('id', sourceAccountId)
+      .eq('user_id', user.id)
+      .single()
+    if (saError || !sa) {
+      return { error: 'Nguồn tiền thanh toán không hợp lệ.', success: false, message: null }
+    }
+    sourceAccount = sa
+  }
+
   const { data, error } = await supabase
     .from('asset_accounts')
     .insert({
@@ -252,6 +273,55 @@ export async function createAssetAccount(
 
   if (error) {
     return { error: error.message, success: false, message: null }
+  }
+
+  // Handle funding wallet updates and create transaction log
+  if (sourceAccount) {
+    const cost = quantity * purchaseUnitPrice
+    let deduction = cost
+    if (currency === 'USD' && sourceAccount.currency === 'VND') {
+      deduction = cost * 25000
+    } else if (currency === 'VND' && sourceAccount.currency === 'USD') {
+      deduction = cost / 25000
+    }
+
+    const newSourceQty = Number(sourceAccount.quantity) - deduction
+    await supabase
+      .from('asset_accounts')
+      .update({ quantity: newSourceQty })
+      .eq('id', sourceAccount.id)
+
+    // Insert purchase transaction log
+    await supabase
+      .from('asset_transactions')
+      .insert({
+        user_id: user.id,
+        account_id: data.id,
+        source_account_id: sourceAccount.id,
+        type: 'buy',
+        amount: isCashCategory ? quantity : cost,
+        quantity: isCashCategory ? 1 : quantity,
+        price_per_unit: isCashCategory ? quantity : purchaseUnitPrice,
+        currency: currency,
+        transaction_date: purchaseDate,
+        description: description || `Mua tài sản ${finalName} chuyển từ ${sourceAccount.name}`
+      })
+  } else {
+    // Standard asset creation log (without deduction)
+    await supabase
+      .from('asset_transactions')
+      .insert({
+        user_id: user.id,
+        account_id: data.id,
+        source_account_id: null,
+        type: isCashCategory ? 'income' : 'buy',
+        amount: isCashCategory ? quantity : (quantity * purchaseUnitPrice),
+        quantity: isCashCategory ? 1 : quantity,
+        price_per_unit: isCashCategory ? quantity : purchaseUnitPrice,
+        currency: currency,
+        transaction_date: purchaseDate,
+        description: description || (isCashCategory ? `Nạp tiền vào ${finalName}` : `Tạo tài sản ${finalName}`)
+      })
   }
 
   revalidatePath('/dashboard/assets')
@@ -481,6 +551,17 @@ export async function syncAssetPrices(): Promise<ActionResult> {
     error: null, 
     success: true, 
     message: `Đã đồng bộ giá thành công cho ${updatedCount}/${accounts.length} tài sản!` 
+  }
+}
+
+export async function getHeaderRates(): Promise<{ btc: number | null; sjc: number | null }> {
+  try {
+    const btc = await fetchLivePrice('BTC', 'Crypto')
+    const sjc = await fetchLivePrice('SJC', 'Gold')
+    return { btc, sjc }
+  } catch (err) {
+    console.error('Error fetching header rates:', err)
+    return { btc: null, sjc: null }
   }
 }
 

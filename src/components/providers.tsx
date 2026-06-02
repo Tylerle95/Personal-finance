@@ -102,7 +102,9 @@ const translations = {
     manageCategories: 'Quản lý danh mục',
     signOut: 'Đăng xuất',
     navOverview: 'Tổng quan',
-    navAssets: 'Lịch sử giao dịch',
+    navAssets: 'Tài sản & Số dư',
+    navSpending: 'Chi tiêu & Hóa đơn',
+    navTransactions: 'Lịch sử giao dịch',
     navCategories: 'Danh mục của tôi',
   },
   en: {
@@ -147,7 +149,9 @@ const translations = {
     manageCategories: 'Manage Categories',
     signOut: 'Sign Out',
     navOverview: 'Overview',
-    navAssets: 'Transaction History',
+    navAssets: 'Assets & Balances',
+    navSpending: 'Bills & Spending',
+    navTransactions: 'Transaction History',
     navCategories: 'My Categories',
   },
 }

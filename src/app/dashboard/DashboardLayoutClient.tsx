@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
-import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe, FolderKanban } from 'lucide-react'
+import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe, FolderKanban, Receipt, ArrowLeftRight } from 'lucide-react'
 import RippleButton from '@/components/ui/RippleButton'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
+import { getHeaderRates } from '@/app/actions/assets'
 
 interface DashboardLayoutClientProps {
   user: {
@@ -27,6 +28,8 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
   const [mounted, setMounted] = useState<boolean>(false)
   const logoutFormRef = useRef<HTMLFormElement>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [rates, setRates] = useState<{ btc: number | null; sjc: number | null }>({ btc: null, sjc: null })
+  const [ratesLoading, setRatesLoading] = useState<boolean>(true)
 
   // Sync state with localStorage on mount
   useEffect(() => {
@@ -36,6 +39,25 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
     }
     setMounted(true)
   }, [])
+
+  // Fetch rates
+  useEffect(() => {
+    async function fetchRates() {
+      try {
+        const res = await getHeaderRates()
+        setRates(res)
+      } catch (err) {
+        console.error('Failed to fetch header rates:', err)
+      } finally {
+        setRatesLoading(false)
+      }
+    }
+    if (mounted) {
+      fetchRates()
+      const interval = setInterval(fetchRates, 60000)
+      return () => clearInterval(interval)
+    }
+  }, [mounted])
 
   // Save changes to localStorage
   const handleToggleSidebar = () => {
@@ -74,6 +96,30 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
                 {t('appName')}
               </span>
             </Link>
+
+            {/* Live Ticker Badges */}
+            <div className="hidden md:flex items-center gap-2 ml-4">
+              {/* BTC Ticker */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/15" title="Giá BTC Live (USD)">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span>BTC:</span>
+                <span>
+                  {rates.btc !== null 
+                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(rates.btc / 25000) 
+                    : (ratesLoading ? '...' : 'N/A')}
+                </span>
+              </div>
+              {/* SJC Ticker */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/15" title="Giá Vàng SJC Live (lượng)">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+                <span>SJC:</span>
+                <span>
+                  {rates.sjc !== null 
+                    ? `${(rates.sjc / 1000000).toFixed(1)}M ₫` 
+                    : (ratesLoading ? '...' : 'N/A')}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Action Toolbar */}
@@ -152,7 +198,7 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
               )}
             </Link>
 
-            {/* Nav: Assets (Lịch sử giao dịch / Tài sản) */}
+            {/* Nav: Assets (Tài sản & Số dư) */}
             <Link
               href="/dashboard/assets"
               className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
@@ -170,6 +216,50 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
               {(!mounted || isSidebarExpanded) && (
                 <span className="text-sm font-semibold truncate">
                   {t('navAssets')}
+                </span>
+              )}
+            </Link>
+
+            {/* Nav: Spending & Bills (Chi tiêu & Hóa đơn) */}
+            <Link
+              href="/dashboard/spending"
+              className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
+                mounted && !isSidebarExpanded
+                  ? 'items-center justify-center p-3'
+                  : 'items-center gap-3 px-4 py-3'
+              } ${
+                pathname.startsWith('/dashboard/spending')
+                  ? 'bg-violet-500/10 text-primary font-bold border border-violet-500/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white border border-transparent'
+              }`}
+              title={mounted && !isSidebarExpanded ? t('navSpending') : undefined}
+            >
+              <Receipt className="h-5 w-5 shrink-0" />
+              {(!mounted || isSidebarExpanded) && (
+                <span className="text-sm font-semibold truncate">
+                  {t('navSpending')}
+                </span>
+              )}
+            </Link>
+
+            {/* Nav: Transaction History (Lịch sử giao dịch) */}
+            <Link
+              href="/dashboard/transactions"
+              className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
+                mounted && !isSidebarExpanded
+                  ? 'items-center justify-center p-3'
+                  : 'items-center gap-3 px-4 py-3'
+              } ${
+                pathname.startsWith('/dashboard/transactions')
+                  ? 'bg-violet-500/10 text-primary font-bold border border-violet-500/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white border border-transparent'
+              }`}
+              title={mounted && !isSidebarExpanded ? t('navTransactions') : undefined}
+            >
+              <ArrowLeftRight className="h-5 w-5 shrink-0" />
+              {(!mounted || isSidebarExpanded) && (
+                <span className="text-sm font-semibold truncate">
+                  {t('navTransactions')}
                 </span>
               )}
             </Link>
@@ -236,6 +326,28 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
           >
             <Wallet className="h-5 w-5" />
             <span className="text-[10px] tracking-wide">{t('navAssets')}</span>
+          </Link>
+          <Link
+            href="/dashboard/spending"
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-[0.97] cursor-pointer ${
+              pathname.startsWith('/dashboard/spending')
+                ? 'text-primary font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-foreground'
+            }`}
+          >
+            <Receipt className="h-5 w-5" />
+            <span className="text-[10px] tracking-wide">{t('navSpending')}</span>
+          </Link>
+          <Link
+            href="/dashboard/transactions"
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-[0.97] cursor-pointer ${
+              pathname.startsWith('/dashboard/transactions')
+                ? 'text-primary font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-foreground'
+            }`}
+          >
+            <ArrowLeftRight className="h-5 w-5" />
+            <span className="text-[10px] tracking-wide">{t('navTransactions')}</span>
           </Link>
           <Link
             href="/dashboard/categories"
