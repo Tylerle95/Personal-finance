@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { ActionResult, PREDEFINED_COLORS, PREDEFINED_ICONS } from '@/lib/types/assets'
+import { fetchLivePrice } from '@/lib/services/market-prices'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Category Actions
@@ -177,7 +178,8 @@ export async function createAssetAccount(
   const name = (formData.get('name') as string)?.trim()
   const categoryId = (formData.get('category_id') as string)?.trim()
   const quantityRaw = formData.get('quantity') as string
-  const unitPriceRaw = formData.get('unit_price') as string
+  const purchaseUnitPriceRaw = formData.get('purchase_unit_price') as string
+  const ticker = (formData.get('ticker') as string)?.trim() || null
   const currency = (formData.get('currency') as string)?.trim() || 'VND'
   const purchaseDate = (formData.get('purchase_date') as string)?.trim() || new Date().toISOString().split('T')[0]
   const description = (formData.get('description') as string)?.trim() || null
@@ -205,11 +207,21 @@ export async function createAssetAccount(
     return { error: isCashCategory ? 'Số dư phải là số không âm.' : 'Số lượng phải là số không âm.', success: false, message: null }
   }
 
+  let purchaseUnitPrice = 1
   let unitPrice = 1
+  let finalTicker = null
+
   if (!isCashCategory) {
-    unitPrice = parseFloat(unitPriceRaw)
-    if (isNaN(unitPrice) || unitPrice < 0) {
-      return { error: 'Đơn giá phải là số không âm.', success: false, message: null }
+    purchaseUnitPrice = parseFloat(purchaseUnitPriceRaw)
+    if (isNaN(purchaseUnitPrice) || purchaseUnitPrice < 0) {
+      return { error: 'Giá mua phải là số không âm.', success: false, message: null }
+    }
+    finalTicker = ticker
+    if (finalTicker) {
+      const livePrice = await fetchLivePrice(finalTicker, categoryData.name)
+      unitPrice = livePrice !== null ? livePrice : purchaseUnitPrice
+    } else {
+      unitPrice = purchaseUnitPrice
     }
   }
 
@@ -228,7 +240,9 @@ export async function createAssetAccount(
       category_id: categoryId,
       name: finalName,
       quantity,
+      purchase_unit_price: purchaseUnitPrice,
       unit_price: unitPrice,
+      ticker: finalTicker,
       currency,
       purchase_date: purchaseDate,
       description,
@@ -303,13 +317,16 @@ export async function updateAssetAccount(
   if (categoryId) updates.category_id = categoryId
 
   const quantityRaw = formData.get('quantity') as string
-  const unitPriceRaw = formData.get('unit_price') as string
+  const purchaseUnitPriceRaw = formData.get('purchase_unit_price') as string
+  const tickerRaw = formData.get('ticker') as string
   const currency = (formData.get('currency') as string)?.trim()
   const purchaseDate = (formData.get('purchase_date') as string)?.trim()
   const description = formData.get('description') as string
 
   if (isCashCategory) {
     updates.unit_price = 1
+    updates.purchase_unit_price = 1
+    updates.ticker = null
     if (quantityRaw !== null && quantityRaw !== '') {
       const quantity = parseFloat(quantityRaw)
       if (isNaN(quantity) || quantity < 0) {
@@ -325,12 +342,22 @@ export async function updateAssetAccount(
       }
       updates.quantity = quantity
     }
-    if (unitPriceRaw !== null && unitPriceRaw !== '') {
-      const unitPrice = parseFloat(unitPriceRaw)
-      if (isNaN(unitPrice) || unitPrice < 0) {
-        return { error: 'Đơn giá phải là số không âm.', success: false, message: null }
+    if (purchaseUnitPriceRaw !== null && purchaseUnitPriceRaw !== '') {
+      const purchaseUnitPrice = parseFloat(purchaseUnitPriceRaw)
+      if (isNaN(purchaseUnitPrice) || purchaseUnitPrice < 0) {
+        return { error: 'Giá mua phải là số không âm.', success: false, message: null }
       }
-      updates.unit_price = unitPrice
+      updates.purchase_unit_price = purchaseUnitPrice
+    }
+    if (tickerRaw !== null) {
+      const cleanTicker = tickerRaw.trim() || null
+      updates.ticker = cleanTicker
+      if (cleanTicker) {
+        const livePrice = await fetchLivePrice(cleanTicker, categoryData.name)
+        if (livePrice !== null) {
+          updates.unit_price = livePrice
+        }
+      }
     }
   }
 
@@ -402,5 +429,58 @@ export async function deleteAssetAccount(
   revalidatePath('/dashboard/assets')
   revalidatePath('/dashboard')
   return { error: null, success: true, message: 'Tài sản đã được xóa thành công!' }
+}
+
+export async function syncAssetPrices(): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Bạn cần đăng nhập để thực hiện thao tác này.', success: false, message: null }
+  }
+
+  // Fetch all asset accounts that have a ticker
+  const { data: accounts, error: fetchError } = await supabase
+    .from('asset_accounts')
+    .select('id, ticker, category:asset_categories(name)')
+    .eq('user_id', user.id)
+    .not('ticker', 'is', null)
+
+  if (fetchError) {
+    return { error: fetchError.message, success: false, message: null }
+  }
+
+  if (!accounts || accounts.length === 0) {
+    return { error: null, success: true, message: 'Không có tài sản nào cần đồng bộ giá.' }
+  }
+
+  let updatedCount = 0
+  for (const account of accounts) {
+    if (!account.ticker) continue
+    const catName = (account.category as any)?.name
+    const newPrice = await fetchLivePrice(account.ticker, catName)
+    
+    if (newPrice !== null && newPrice > 0) {
+      const { error: updateError } = await supabase
+        .from('asset_accounts')
+        .update({ unit_price: newPrice, updated_at: new Date().toISOString() })
+        .eq('id', account.id)
+        .eq('user_id', user.id)
+        
+      if (!updateError) {
+        updatedCount++
+      }
+    }
+  }
+
+  revalidatePath('/dashboard/assets')
+  revalidatePath('/dashboard')
+  return { 
+    error: null, 
+    success: true, 
+    message: `Đã đồng bộ giá thành công cho ${updatedCount}/${accounts.length} tài sản!` 
+  }
 }
 

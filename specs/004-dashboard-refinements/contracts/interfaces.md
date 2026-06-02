@@ -31,7 +31,7 @@ Renders a donut-shaped chart for asset allocation percentages.
 interface AllocationItem {
   category_id: string
   label: string
-  value: number
+  totalValue: number
   percentage: number
   color: string
   icon: string

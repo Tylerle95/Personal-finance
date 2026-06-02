@@ -61,3 +61,19 @@ Implement a reusable `<ConfirmationModal>` component in `src/components/ui/Confi
 
 ### Alternatives Considered
 - **Browser default `window.confirm()`**: Functional, but looks dated and disrupts the premium UI experience.
+
+---
+
+## 5. Live Market Price Synchronization
+
+### Decision
+Implement a server pricing utility `src/lib/services/market-prices.ts` with on-demand synchronization:
+- **Vàng (Gold)**: Fetch from Vang.Today API (`https://www.vang.today/api/prices`).
+- **Crypto**: Fetch from Binance public ticker API (`https://api.binance.com/api/v3/ticker/price?symbol=${ticker}USDT`), converting the USD price to VND using a standard fixed exchange rate of 25,000 VND/USD (or dynamically fetching dynamic rates).
+- **Stock (Chứng khoán)**: Fetch from TCBS/VNDirect public price board endpoints (e.g. TCBS Fast API or public stock boards).
+Create a server action `syncAssetPrices` that updates `unit_price` fields in the database.
+
+### Rationale
+- **User Convenience**: Fully automates tracking of active assets, eliminating manual input for current value.
+- **On-Demand Performance**: Instead of resource-intensive cron-jobs, fetching and syncing when users view their transactions keeps API usage lightweight and database updates on-demand.
+- **Fallbacks**: If the API call fails or ticker is not found, it keeps the existing `unit_price` in the database.

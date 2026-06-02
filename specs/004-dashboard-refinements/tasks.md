@@ -32,6 +32,10 @@
 
 - [x] T002 Create reusable confirmation popup modal `src/components/ui/ConfirmationModal.tsx` following glassmorphic styling constraints
 - [x] T003 [P] Create reusable circular/donut chart component `src/components/ui/CircularAllocationChart.tsx` using native SVG with hover animations and tooltips
+- [x] T016 Setup database schema migration to add `purchase_unit_price` and `ticker` columns to `asset_accounts` table
+- [x] T017 [P] Update interface definition of `AssetAccount` in `src/lib/types/assets.ts` to include `purchase_unit_price` and `ticker`
+- [x] T018 Create the server-side price fetching service in `src/lib/services/market-prices.ts`
+- [x] T019 Update Server Actions `createAssetAccount` and `updateAssetAccount` and add `syncAssetPrices` in `src/app/actions/assets.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -77,8 +81,11 @@
 
 - [x] T008 [US3] Refactor title elements and headers in `src/app/dashboard/assets/AssetClient.tsx` from "Tài sản của tôi" to "Lịch sử giao dịch"
 - [x] T009 [US3] Refactor `src/app/dashboard/assets/AssetClient.tsx` to display the accounts as rows in an HTML `<table>` (collapsing responsively on mobile) instead of a card grid. Integrate `ConfirmationModal` on asset delete actions.
+- [x] T020 [US3] Add `ticker` and `purchase_unit_price` input fields in creation/edit forms inside `src/app/dashboard/assets/AssetClient.tsx` (only for investment categories, hiding `unit_price`)
+- [x] T021 [US3] Add a "Đồng bộ giá" (Sync Prices) button to `AssetClient.tsx` that triggers the `syncAssetPrices` Server Action
+- [x] T022 [US3] Update transaction table rendering in `AssetClient.tsx` to display separate columns for quantity, purchase price, current price, and color-coded profit/loss calculation
 
-**Checkpoint**: User Story 3 is functional. The asset accounts list is renamed and displayed in rows.
+**Checkpoint**: User Story 3 is functional. The asset accounts list is renamed, displayed in rows, and supports profit/loss tracking.
 
 ---
 
@@ -118,6 +125,7 @@
 
 - [x] T014 Run validation scenarios in [quickstart.md](./quickstart.md) to check overall user experience
 - [x] T015 Verify glassmorphic designs (borders, dark mode contrast, responsiveness) match premium UI UX guidelines
+- [x] T023 Run verification scenarios in `quickstart.md` to test the ticker creation, edit, sync button, and Profit/Loss styling
 
 ---
 

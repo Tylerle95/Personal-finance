@@ -16,7 +16,9 @@ export interface AssetAccount {
   category_id: string
   name: string
   quantity: number
+  purchase_unit_price: number
   unit_price: number
+  ticker: string | null
   currency: string
   purchase_date: string
   description: string | null

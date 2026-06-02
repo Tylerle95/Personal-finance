@@ -23,12 +23,20 @@ Make sure you are on the `004-dashboard-refinements` branch and the local develo
 3. Perform CRUD actions on categories (add new category, edit name, change color/icon) and verify they are persisted successfully.
 4. Verify that delete icons triggers a Confirmation Modal.
 
-### Scenario 3: Transaction History Row-Based Layout
+### Scenario 3: Transaction History Row-Based Layout & Profit/Loss Tracking
 1. Click the **"Lịch sử giao dịch"** sidebar menu item.
 2. Verify that the page header says "Lịch sử giao dịch".
 3. Check the list of assets/accounts. It must be rendered as rows in a table (or stackable row list on smaller viewports) rather than a grid of cards.
-4. Verify columns: Name, Category, Purchase Date, Value/Balance, Actions (Edit/Delete).
-5. Hover over a row to check the styling feedback (slight background transition, clear action buttons).
+4. Verify columns: Tên tài sản, Danh mục, Ngày sở hữu, Số lượng, Giá mua, Giá hiện tại, Lời/Lỗ, Tổng giá trị, Thao tác.
+5. Verify that Profit/Loss displays:
+   - Positive/Profit: Green text color, prefixed with `+`, showing the absolute value difference and the percentage. E.g., `+100.000 ₫ (+5.2%)`.
+   - Negative/Loss: Red text color, prefixed with `-`, showing the absolute value difference and the percentage. E.g., `-50.000 ₫ (-2.5%)`.
+   - Cash/Bank assets: Displays as `-` with neutral slate-500 coloring, as cash holdings do not track investment profit/loss.
+6. Hover over a row to check the styling feedback (slight background transition, clear action buttons).
+7. Click **"Thêm tài sản"** button. If selecting an investment category (e.g. Vàng, Stocks, Crypto), verify the form displays both **"Đơn giá mua"** and **"Mã tài sản / Ticker"** input fields (while "Đơn giá hiện tại" is hidden and fetched automatically). If selecting cash/bank (e.g. Tiền mặt, Ngân hàng), verify the form only displays a single **"Số dư / Giá trị"** input field.
+8. Add a new investment with a valid ticker (e.g., `HPG` for stocks, `BTC` for crypto, or `SJC` for gold) and verify that the current price and profit/loss are fetched and calculated automatically.
+9. Verify that a **"Đồng bộ giá"** (Sync Prices) button exists on the top of the table which updates all prices and recalculates value and profit/loss dynamically on click.
+10. Click **Edit** (Pencil icon) on an asset, update either the Purchase Price or Ticker, and verify that current prices and profit/loss are updated correctly.
 
 ### Scenario 4: Circular Asset Allocation Chart
 1. Click the **"Tổng quan"** sidebar menu item.

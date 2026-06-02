@@ -115,12 +115,48 @@ Create the client-side UI displaying the categories list in a clean table or row
 
 ---
 
-### 4. Transaction History Page (Renamed Assets)
+### 4. Transaction History Page (Renamed Assets) & Live Price Synchronization
+
+#### [NEW] [market-prices.ts](file:///Users/tylerle/Documents/Me/Personal-finance/src/lib/services/market-prices.ts)
+Create a server-side service `src/lib/services/market-prices.ts` to fetch live prices:
+- **Gold**: Call `https://www.vang.today/api/prices` and match SJC/DOJI prices.
+- **Crypto**: Call Binance public price API `https://api.binance.com/api/v3/ticker/price?symbol=${ticker}USDT`, converting USD to VND at 25,000 exchange rate.
+- **Stocks**: Fetch stock codes from public VNDirect/TCBS boards.
 
 #### [MODIFY] [AssetClient.tsx](file:///Users/tylerle/Documents/Me/Personal-finance/src/app/dashboard/assets/AssetClient.tsx)
 - Rename the page heading from "Tài sản của tôi" to "Lịch sử giao dịch".
-- Replace `<div className="assets-grid">` with an HTML `<table>` displaying asset holdings in clean rows with columns: Name, Category, Date, Value, Actions.
+- Replace `<div className="assets-grid">` with an HTML `<table>` displaying asset holdings in clean rows with columns: Tài sản, Danh mục, Ngày sở hữu, Số lượng, Giá mua, Giá hiện tại, Lời/Lỗ, Tổng giá trị, Thao tác.
+- Hide "Giá hiện tại" input in creation/edit forms and add an optional **"Mã Ticker"** (`ticker`) input field (e.g. `BTC`, `HPG`, `SJC`) for investment categories.
+- Add a **"Đồng bộ giá"** (Sync Prices) button on the desktop layout that triggers price synchronization.
+- Calculate Profit/Loss dynamically: `(unit_price - purchase_unit_price) * quantity` along with percentage `((unit_price - purchase_unit_price) / purchase_unit_price) * 100` and apply green/red styling contextually (grey/disabled for cash assets).
 - Wrap deletion triggers with the `ConfirmationModal` before invoking the `deleteAssetAccount` Server Action.
+
+#### [MODIFY] [assets.ts](file:///Users/tylerle/Documents/Me/Personal-finance/src/app/actions/assets.ts)
+- Modify `createAssetAccount` to read `purchase_unit_price` and `ticker` from `formData`, validate them, set initial `unit_price` (either fetched from live API or defaulted), and insert them into the database.
+- Modify `updateAssetAccount` to support updating `purchase_unit_price` and `ticker`.
+- Add a new server action `syncAssetPrices` that finds all accounts with a `ticker`, fetches their latest prices using `market-prices.ts`, updates the database `unit_price` values, and triggers page revalidation.
+
+#### [MODIFY] [assets.ts](file:///Users/tylerle/Documents/Me/Personal-finance/src/lib/types/assets.ts)
+- Add `purchase_unit_price: number` and `ticker: string | null` to the `AssetAccount` interface definition.
+
+---
+
+### 5. Database Schema Migration
+
+#### [MODIFY] [Database Migration (PostgreSQL)](file:///Users/tylerle/Documents/Me/Personal-finance/specs/004-dashboard-refinements/data-model.md)
+Add SQL migration query to insert `purchase_unit_price` and `ticker` columns in `asset_accounts` table:
+```sql
+ALTER TABLE public.asset_accounts 
+ADD COLUMN IF NOT EXISTS purchase_unit_price NUMERIC NOT NULL DEFAULT 0;
+
+ALTER TABLE public.asset_accounts 
+ADD COLUMN IF NOT EXISTS ticker VARCHAR(20);
+
+-- Populate existing rows where purchase_unit_price is default/unset
+UPDATE public.asset_accounts 
+SET purchase_unit_price = unit_price 
+WHERE purchase_unit_price = 0;
+```
 
 ---
 
@@ -131,5 +167,8 @@ Validate all interactive states following the verification flows in [quickstart.
 - Desktop Collapsed/Expanded states for YouTube-style sidebar layout.
 - Access `/dashboard/categories` route, CRUD categories, verify RLS policies work.
 - Access `/dashboard/assets` (Transaction History), check row-based desktop & mobile responsiveness.
+- Verify creating investment assets with tickers (e.g. `BTC`, `HPG`, `SJC`) automatically fetches and stores their current market price.
+- Click "Đồng bộ giá" button, verify prices sync and Profit/Loss values recalculate dynamically.
+- Verify Profit/Loss indicators are color-coded (green for positive, red for negative, neutral/disabled for cash).
 - Check Donut Chart render and hover tooltips on `/dashboard`.
 - Verify Confirmation Modals trigger for delete operations and the logout button.

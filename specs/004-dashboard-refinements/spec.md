@@ -16,6 +16,14 @@
 
 ---
 
+## Clarifications
+
+### Session 2026-06-02
+- Q: Tách cột "Chi tiết số lượng / đơn giá" và tính toán Lời/Lỗ cho các khoản đầu tư → A: Option A - Tách thành các cột riêng: "Số lượng", "Giá mua" và "Giá hiện tại" trên bảng. Thêm cột "Lời/Lỗ" (hiển thị số tiền lời/lỗ và % xanh/đỏ). Bổ sung cột `purchase_unit_price` vào database.
+- Q: Lấy đơn giá hiện tại (VND) trực tiếp từ thị trường không cần người dùng nhập → A: Đồng ý. Bổ sung trường "Mã tài sản / Ticker" (ví dụ: BTC, HPG, SJC) khi thêm/sửa tài sản. Tự động gọi API (Vang.Today cho vàng, CoinGecko/Binance cho crypto, VNDirect cho chứng khoán) để cập nhật "Giá hiện tại" tự động khi hiển thị bảng giao dịch.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Collapsible Sidebar Navigation Enhancements (Priority: P1)
@@ -39,7 +47,7 @@ Users see an updated sidebar menu layout. The Collapsed (mini) mode is refined t
 
 ### User Story 2 - Transaction History Row-Based Layout (Priority: P2)
 
-The main asset holdings list is renamed to "Lịch sử giao dịch" (Transaction History). Instead of displaying holdings as cards in a grid, the system displays them in a clean, scrollable row-based table/list layout to accommodate a high volume of transactions/assets.
+The main asset holdings list is renamed to "Lịch sử giao dịch" (Transaction History). Instead of displaying holdings as cards in a grid, the system displays them in a clean, scrollable row-based table/list layout to accommodate a high volume of transactions/assets. Automatic market price syncing based on Ticker ensures current prices are updated seamlessly on page load.
 
 **Why this priority**: Scalability of the UI. A card grid is not practical when users have dozens or hundreds of holdings; a row-based layout allows for easier scanning, filtering, and sorting of transaction data.
 
@@ -47,7 +55,7 @@ The main asset holdings list is renamed to "Lịch sử giao dịch" (Transactio
 1. Navigate to the "Lịch sử giao dịch" screen.
 2. Verify the page title is "Lịch sử giao dịch".
 3. Verify that the asset accounts list is displayed as table rows.
-4. Each row must display: Name, Category (with icon and colored dot), Date (Purchase/Transaction Date), Value/Balance (with USD/VND conversion), and action buttons (Edit, Delete).
+4. Each row must display: Name, Category (with icon and colored dot), Date (Purchase/Transaction Date), Quantity, Purchase Unit Price, Current Unit Price, Profit/Loss (both in amount and percentage, with green/red indicator styling), Total Value, and action buttons (Edit, Delete).
 
 **Acceptance Scenarios**:
 1. **Given** the user has 15 asset accounts/transactions, **When** they load the transaction list page, **Then** they see a table layout where each account is a row with clear columns.
@@ -106,16 +114,22 @@ All high-impact destructive or session-terminating actions in the application mu
 - **FR-002**: System MUST render the navigation items in the left sidebar as: "Tổng quan", "Lịch sử giao dịch", and "Danh mục của tôi".
 - **FR-003**: In Collapsed sidebar mode (width = 72px), the left sidebar MUST only show the Lucide icons, completely hiding the text labels.
 - **FR-004**: System MUST add a new page `/dashboard/categories` for "Danh mục của tôi" (My Categories) allowing users to manage categories on a separate page.
-- **FR-005**: The asset holdings list page (previously "Tài sản của tôi") MUST be renamed to "Lịch sử giao dịch" and MUST render the data using a row-based table or list layout instead of a grid. The underlying data model remains the same (AssetAccount).
-- **FR-006**: Each row in the transaction history MUST display: Asset/Category name, Category icon/color badge, Purchase Date, Quantity, Unit Price, Currency, Total Value, and action buttons (Edit, Delete).
+- **FR-005**: The asset holdings list page (previously "Tài sản của tôi") MUST be renamed to "Lịch sử giao dịch" and MUST render the data using a row-based table or list layout instead of a grid.
+- **FR-006**: Each row in the transaction history MUST display: Asset/Category name, Category icon/color badge, Purchase Date, Quantity, Purchase Unit Price, Current Unit Price, Profit/Loss (both in amount and percentage, with green/red indicator text), Total Value, and action buttons (Edit, Delete).
 - **FR-007**: The dashboard Net Worth summary allocation chart MUST be rendered as a circular/donut shape (using SVG or a lightweight charting library).
 - **FR-008**: System MUST display a confirmation modal before performing any Delete operations (delete asset account, delete asset category).
 - **FR-009**: System MUST display a confirmation modal when the user clicks the "Sign Out" / "Logout" button.
 - **FR-010**: Confirmation modals MUST follow the glassmorphic design system: background blur filter, soft border, custom colors, and clear action button options ("Xác nhận" and "Hủy").
 
+- **FR-011**: System MUST support a "Mã tài sản / Ticker" (ticker) field for investment categories (Gold, Stocks, Crypto).
+- **FR-012**: System MUST hide the "Giá hiện tại" input field from the UI and fetch it automatically from public market APIs (Vang.Today for gold, CoinGecko/Binance for crypto, VNDirect/TCBS/SSI for stocks) using the ticker.
+- **FR-013**: System MUST provide an automatic or on-demand price synchronization function that pulls market prices, updates `unit_price` in the database, and recalculates value and Profit/Loss.
+
 ### Key Entities *(include if feature involves data)*
 
-- No new database entities are introduced in this phase, as we continue to build upon the existing `AssetCategory` and `AssetAccount` entities. If full transaction history is chosen, a new `AssetTransaction` entity will be used.
+- **AssetCategory**: Unchanged representation of custom asset categories.
+- **AssetAccount**: Updated to store purchase pricing, current pricing, and a market ticker to calculate Profit/Loss.
+  - Attributes: `id` (UUID), `user_id` (UUID), `category_id` (UUID), `name` (Text), `ticker` (VARCHAR - optional market ticker, e.g. 'BTC', 'SSI', 'SJC'), `quantity` (Numeric), `purchase_unit_price` (Numeric - purchase unit price), `unit_price` (Numeric - current unit price), `currency` (Text), `purchase_date` (Date), `created_at` (Timestamp).
 
 ---
 
