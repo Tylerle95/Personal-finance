@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
-import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe, FolderKanban, Receipt, ArrowLeftRight } from 'lucide-react'
+import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe, FolderKanban, Receipt, ArrowLeftRight, ChevronDown, ChevronRight } from 'lucide-react'
 import RippleButton from '@/components/ui/RippleButton'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { getHeaderRates } from '@/app/actions/assets'
@@ -24,19 +24,49 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale, t } = useLanguage()
   const pathname = usePathname()
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar_expanded')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
   const [mounted, setMounted] = useState<boolean>(false)
   const logoutFormRef = useRef<HTMLFormElement>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [rates, setRates] = useState<{ btc: number | null; sjc: number | null }>({ btc: null, sjc: null })
   const [ratesLoading, setRatesLoading] = useState<boolean>(true)
-
-  // Sync state with localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('sidebar_expanded')
-    if (saved !== null) {
-      setIsSidebarExpanded(saved === 'true')
+  
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.pathname.startsWith('/dashboard/categories')
     }
+    return false
+  })
+  const [currentTabType, setCurrentTabType] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      return params.get('type') || 'asset'
+    }
+    return 'asset'
+  })
+
+  // Sync state when pathname changes during render
+  const [lastPathname, setLastPathname] = useState<string>('')
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname)
+    if (pathname.startsWith('/dashboard/categories')) {
+      setIsCategoriesExpanded(true)
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        setCurrentTabType(params.get('type') || 'asset')
+      }
+    }
+  }
+
+  // Sync mount state
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -64,6 +94,17 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
     const nextState = !isSidebarExpanded
     setIsSidebarExpanded(nextState)
     localStorage.setItem('sidebar_expanded', String(nextState))
+  }
+
+  const handleToggleCategories = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!isSidebarExpanded) {
+      setIsSidebarExpanded(true)
+      localStorage.setItem('sidebar_expanded', 'true')
+      setIsCategoriesExpanded(true)
+    } else {
+      setIsCategoriesExpanded(!isCategoriesExpanded)
+    }
   }
 
   return (
@@ -265,12 +306,12 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             </Link>
 
             {/* Nav: Categories (Danh mục của tôi) */}
-            <Link
-              href="/dashboard/categories"
-              className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
+            <button
+              onClick={handleToggleCategories}
+              className={`w-full flex rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer text-left ${
                 mounted && !isSidebarExpanded
                   ? 'items-center justify-center p-3'
-                  : 'items-center gap-3 px-4 py-3'
+                  : 'items-center justify-between px-4 py-3'
               } ${
                 pathname.startsWith('/dashboard/categories')
                   ? 'bg-violet-500/10 text-primary font-bold border border-violet-500/20'
@@ -278,13 +319,50 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
               }`}
               title={mounted && !isSidebarExpanded ? t('navCategories') : undefined}
             >
-              <FolderKanban className="h-5 w-5 shrink-0" />
+              <div className="flex items-center gap-3">
+                <FolderKanban className="h-5 w-5 shrink-0" />
+                {(!mounted || isSidebarExpanded) && (
+                  <span className="text-sm font-semibold truncate">
+                    {t('navCategories')}
+                  </span>
+                )}
+              </div>
               {(!mounted || isSidebarExpanded) && (
-                <span className="text-sm font-semibold truncate">
-                  {t('navCategories')}
-                </span>
+                isCategoriesExpanded ? <ChevronDown className="h-4 w-4 text-slate-450" /> : <ChevronRight className="h-4 w-4 text-slate-450" />
               )}
-            </Link>
+            </button>
+
+            {/* Collapsible Submenu list */}
+            {(!mounted || isSidebarExpanded) && isCategoriesExpanded && (
+              <div className="pl-3.5 flex flex-col gap-1 mt-0.5 animate-fade-in">
+                <Link
+                  href="/dashboard/categories?type=asset"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    pathname.startsWith('/dashboard/categories') && currentTabType === 'asset'
+                      ? 'text-primary font-bold bg-violet-500/5 border border-violet-500/10'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border border-transparent'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    pathname.startsWith('/dashboard/categories') && currentTabType === 'asset' ? 'bg-violet-500' : 'bg-slate-400'
+                  }`} />
+                  Danh mục tài sản
+                </Link>
+                <Link
+                  href="/dashboard/categories?type=spending"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    pathname.startsWith('/dashboard/categories') && currentTabType === 'spending'
+                      ? 'text-primary font-bold bg-violet-500/5 border border-violet-500/10'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border border-transparent'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    pathname.startsWith('/dashboard/categories') && currentTabType === 'spending' ? 'bg-violet-500' : 'bg-slate-400'
+                  }`} />
+                  Danh mục chi tiêu
+                </Link>
+              </div>
+            )}
           </nav>
         </aside>
 

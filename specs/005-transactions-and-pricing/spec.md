@@ -20,6 +20,10 @@
 - Q: How should spending categories (e.g., electricity, water, internet) be managed and stored in the system? → A: Option A - Reusing `asset_categories` with a `type` column (values: `'asset' | 'spending'`) to support full custom CRUD for spending categories (colors, icons).
 - Q: How should editing or deleting a transaction affect the wallet balance? → A: Option A - Automatically adjust (revert & apply). Deleting a transaction reverts the balance modification. Editing a transaction corrects the balance by reverting the old amount and applying the new amount.
 - Q: What currency units and labels should be used to display the live BTC and SJC prices in the top header? → A: Option A - Mixed Standard. BTC in USD (e.g., `BTC: $67.4k`) and SJC in VND/lượng (e.g., `SJC: 89.5M ₫`).
+- Q: What should the category management button/modal in "Tài sản & Số dư" be named? → A: Option A - "Danh mục tài sản" (Asset Categories).
+- Q: What should the category management button/modal in "Chi tiêu & Hóa đơn" be named? → A: Option A - "Danh mục chi tiêu" (Spending Categories).
+- Q: How should the "Danh mục của tôi" sidebar navigation item behave? → A: Option A - Collapsible submenu on Sidebar showing "Danh mục tài sản" (linking to `/dashboard/categories?type=asset`) and "Danh mục chi tiêu" (linking to `/dashboard/categories?type=spending`).
+- Q: How should Income (Thu nhập) transactions be logged and categorized? → A: Option A - Income is logged inside the "Tài sản & Số dư" page (via a "Nhập thu nhập" button/modal) and uses custom categories of type `'income'` in the database. Income logging is completely disabled in the "Chi tiêu & Hóa đơn" section.
 
 ---
 
@@ -44,20 +48,21 @@ Users see live market price tickers for BTC (Bitcoin) and SJC (Gold) displayed i
 
 ### User Story 2 - Spending & Bill Entry with Wallet Integration (Priority: P1)
 
-Users can input bill payments (electricity, water, internet) or regular income/expense transactions. Each transaction must specify a source wallet/account (e.g. Cash, bank account). Saving an expense automatically deducts from the balance of that source wallet, while saving an income adds to it. A new left menu item "Giao dịch chi tiêu" (Spending & Bills) leads to this log.
+Users can input bill payments (electricity, water, internet) or regular expense transactions. Each transaction must specify a source wallet/account (e.g. Cash, bank account). Saving an expense automatically deducts from the balance of that source wallet. Tapping the "Danh mục chi tiêu" button opens a modal to manage expense categories. A new left menu item "Chi tiêu & Hóa đơn" (Spending & Bills) leads to this log. Logging income is not allowed in this view.
 
 **Why this priority**: Essential core functionality for daily finance tracking. It integrates the static asset balances with active cash-flow logging.
 **Independent Test**:
-1. Navigate to the new sidebar item "Giao dịch chi tiêu".
+1. Navigate to the sidebar item "Chi tiêu & Hóa đơn".
 2. Click "Nhập hóa đơn / Giao dịch".
 3. Fill the form: Select Type = "Chi" (Expense), Category = "Điện" (Electricity), Wallet/Source = "Ví Tiền mặt" (which has 2,000,000 ₫ balance), Amount = 500,000 ₫.
 4. Save and verify that:
    - A new transaction row appears in the spending list.
    - The balance of "Ví Tiền mặt" in "Tài sản & Số dư" is automatically updated to 1,500,000 ₫.
+5. Verify that there is no option to log "Thu nhập" (Income) in this form.
 
 **Acceptance Scenarios**:
 1. **Given** the user enters an expense transaction, **When** they select a source wallet, **Then** the source wallet balance is reduced by the transaction amount upon saving.
-2. **Given** the user logs an income transaction, **When** they select a destination wallet, **Then** the wallet balance increases by the transaction amount upon saving.
+2. **Given** the user logs an expense transaction, **When** they select a destination wallet, **Then** the wallet balance decreases by the transaction amount upon saving.
 
 ---
 
@@ -96,6 +101,24 @@ The transaction history page shows a list of all transactions (bills, income, as
 
 ---
 
+### User Story 5 - Income Entry inside Assets & Balances (Priority: P1)
+
+Users can log income transactions (such as salary, interest, bonus) from the "Tài sản & Số dư" page. Each income transaction increases the balance of a selected target wallet/account. Users can categorize income transactions using custom categories managed under a dedicated income category classification.
+
+**Why this priority**: Correctly separates income tracking from day-to-day spending and integrates cash inflows directly into assets.
+**Independent Test**:
+1. Navigate to "Tài sản & Số dư".
+2. Click "Nhập thu nhập" button.
+3. Fill the form: Select Account = "Ví Tiền mặt" (which has 1,000,000 ₫ balance), Category = "Lương" (Salary), Amount = 5,000,000 ₫.
+4. Save and verify that:
+   - The balance of "Ví Tiền mặt" updates to 6,000,000 ₫.
+   - An income transaction of 5,000,000 ₫ is logged in "Lịch sử giao dịch".
+
+**Acceptance Scenarios**:
+1. **Given** the user adds an income transaction, **When** they select a destination wallet, **Then** the wallet balance increases by the transaction amount upon saving.
+
+---
+
 ### Edge Cases
 
 - **Insufficient Balance**: What happens if the user records an expense or asset purchase that exceeds the current balance of the selected wallet?
@@ -111,20 +134,25 @@ The transaction history page shows a list of all transactions (bills, income, as
 
 - **FR-001**: System MUST fetch and display live market prices for BTC (in USD) and SJC Gold (in VND/lượng) in the top header using a client-side polling or server action endpoint.
 - **FR-002**: System MUST add a database table `public.asset_transactions` to record all transactions (incomes, expenses, buys, sells, transfers) with relationships to `public.asset_accounts`.
-- **FR-003**: System MUST introduce a sidebar navigation item "Giao dịch chi tiêu" pointing to `/dashboard/spending` where users can manage bill logs and expenses.
-- **FR-004**: When creating a spending transaction (type = 'expense' or 'income'), the user MUST select a wallet/account from `public.asset_accounts` of cash/bank categories.
-- **FR-005**: Saving an expense/income transaction MUST atomically update the selected wallet's `quantity` (balance) in the database.
+- **FR-003**: System MUST introduce a sidebar navigation item "Chi tiêu & Hóa đơn" pointing to `/dashboard/spending` where users can manage bill logs and expenses.
+- **FR-004**: When creating a spending transaction (type = 'expense'), the user MUST select a wallet/account from `public.asset_accounts` of cash/bank categories.
+- **FR-005**: Saving an expense transaction MUST atomically update the selected wallet's `quantity` (balance) in the database.
 - **FR-006**: When creating an asset account, the user MUST be allowed to choose a source account/wallet from the dropdown list.
 - **FR-007**: Saving a funded asset account MUST automatically deduct the purchase amount (converted to wallet currency if needed) from the source account balance and create a matching 'buy' transaction log.
 - **FR-008**: System MUST display a unified, paginated transaction history table at `/dashboard/transactions` (labeled "Lịch sử giao dịch" in menu) that loads a maximum of 20 transactions per page.
-- **FR-009**: System MUST reuse the `asset_categories` table by adding a `type` column (values: `'asset' | 'spending'`) to support separate dynamic categories for assets and spending, with default type being `'asset'`.
+- **FR-009**: System MUST reuse the `asset_categories` table by supporting separate dynamic categories for assets, spending, and income via a `type` column (values: `'asset' | 'spending' | 'income'`).
 - **FR-010**: System MUST automatically adjust the associated wallet's balance when a transaction is edited or deleted (reverting the old amount and applying the new amount).
 - **FR-011**: System MUST display the BTC price in USD (e.g., `BTC: $67.4k` or `BTC: $67,450`) and the SJC price in VND per lượng (e.g., `SJC: 89.5M ₫` or `SJC: 89.5 Tr`).
+- **FR-012**: System MUST show a collapsible submenu under "Danh mục của tôi" in the sidebar containing two sub-items: "Danh mục tài sản" (pointing to `/dashboard/categories?type=asset`) and "Danh mục chi tiêu" (pointing to `/dashboard/categories?type=spending`).
+- **FR-013**: System MUST provide a "Nhập thu nhập" button/modal in the "Tài sản & Số dư" page allowing users to record income transactions (type = 'income') associated with an income category, which atomically increases the target account's quantity/balance.
+- **FR-014**: The category management button and modal in "Tài sản & Số dư" MUST be named "Danh mục tài sản" and the category management button and modal in "Chi tiêu & Hóa đơn" MUST be named "Danh mục chi tiêu".
 
 ### Key Entities
 
+- **AssetCategory**: Represents a dynamic category classification.
+  - Attributes: `id` (UUID), `user_id` (UUID), `name` (VARCHAR), `color` (VARCHAR), `icon` (VARCHAR), `type` ('asset' | 'spending' | 'income'), `created_at` (Timestamp), `updated_at` (Timestamp).
 - **AssetTransaction**: Represents an individual log of money in/out or asset transfers.
-  - Attributes: `id` (UUID), `user_id` (UUID), `account_id` (UUID - the wallet or the asset account), `source_account_id` (UUID - optional source wallet for transfers), `type` ('income' | 'expense' | 'buy' | 'sell' | 'transfer'), `category` (VARCHAR - e.g. 'electricity', 'water', 'food'), `amount` (Numeric - value in transaction currency), `quantity` (Numeric - asset units, if applicable), `price_per_unit` (Numeric - if applicable), `currency` (VARCHAR - e.g. 'VND', 'USD'), `transaction_date` (Date), `description` (Text), `created_at` (Timestamp).
+  - Attributes: `id` (UUID), `user_id` (UUID), `account_id` (UUID - the wallet or the asset account), `source_account_id` (UUID - optional source wallet for transfers), `type` ('income' | 'expense' | 'buy' | 'sell' | 'transfer'), `category_id` (UUID - references `asset_categories`), `amount` (Numeric - value in transaction currency), `quantity` (Numeric - asset units, if applicable), `price_per_unit` (Numeric - if applicable), `currency` (VARCHAR - e.g. 'VND', 'USD'), `transaction_date` (Date), `description` (Text), `created_at` (Timestamp).
 
 ---
 

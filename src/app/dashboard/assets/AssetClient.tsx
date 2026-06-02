@@ -19,6 +19,7 @@ import {
   deleteAssetCategory,
   syncAssetPrices,
 } from '@/app/actions/assets'
+import { createTransaction } from '@/app/actions/transactions'
 import DatePicker from '@/components/ui/DatePicker'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { useLanguage } from '@/components/providers'
@@ -26,14 +27,15 @@ import { useLanguage } from '@/components/providers'
 const INITIAL_STATE: ActionResult = { error: null, success: false, message: null }
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
 
-type ModalMode = 'create' | 'edit' | 'delete' | 'categories' | null
+type ModalMode = 'create' | 'edit' | 'delete' | 'categories' | 'income' | null
 
 interface AssetClientProps {
   accounts: AssetAccount[]
   categories: AssetCategory[]
+  incomeCategories: AssetCategory[]
 }
 
-export default function AssetClient({ accounts, categories }: AssetClientProps) {
+export default function AssetClient({ accounts, categories, incomeCategories }: AssetClientProps) {
   const { t } = useLanguage()
   const [modalMode, setModalMode] = useState<ModalMode>(null)
   const [selectedAccount, setSelectedAccount] = useState<AssetAccount | null>(null)
@@ -53,12 +55,18 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   // Form fields for live preview and conditional inputs
   const [previewQty, setPreviewQty] = useState('')
   const [previewPurchasePrice, setPreviewPurchasePrice] = useState('')
-  const [previewPrice, setPreviewPrice] = useState('')
   const [previewTicker, setPreviewTicker] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState('VND')
   const [purchaseDate, setPurchaseDate] = useState('')
-  
+
+  // Income form states
+  const [incomeAmount, setIncomeAmount] = useState('')
+  const [incomeDate, setIncomeDate] = useState('')
+  const [incomeDesc, setIncomeDesc] = useState('')
+  const [selectedIncomeWalletId, setSelectedIncomeWalletId] = useState('')
+  const [selectedIncomeCategoryId, setSelectedIncomeCategoryId] = useState('')
+
   // Sync state
   const [isSyncing, setIsSyncing] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -99,6 +107,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [updateState, updateAction, updatePending] = useActionState(updateAssetAccount, INITIAL_STATE)
   const [deleteState, deleteAction, deletePending] = useActionState(deleteAssetAccount, INITIAL_STATE)
 
+  const [incomeState, incomeAction, incomePending] = useActionState(createTransaction, INITIAL_STATE)
+
   const [catCreateState, catCreateAction, catCreatePending] = useActionState(createAssetCategory, INITIAL_STATE)
   const [catUpdateState, catUpdateAction, catUpdatePending] = useActionState(updateAssetCategory, INITIAL_STATE)
   const [catDeleteState, catDeleteAction, catDeletePending] = useActionState(deleteAssetCategory, INITIAL_STATE)
@@ -107,22 +117,40 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
 
   // Reset forms and close modal on success
   useEffect(() => {
-    if (createState.success || updateState.success || deleteState.success) {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (createState.success || updateState.success || deleteState.success || incomeState.success) {
+      if (createState.success) setToastMessage(createState.message || 'Thêm thành công!')
+      if (updateState.success) setToastMessage(updateState.message || 'Cập nhật thành công!')
+      if (deleteState.success) setToastMessage(deleteState.message || 'Xóa thành công!')
+      if (incomeState.success) setToastMessage(incomeState.message || 'Nhập thu nhập thành công!')
+      setToastType('success')
       closeModal()
+    } else if (createState.error || updateState.error || deleteState.error || incomeState.error) {
+      setToastType('error')
+      setToastMessage(createState.error || updateState.error || deleteState.error || incomeState.error || 'Có lỗi xảy ra!')
     }
-  }, [createState.success, updateState.success, deleteState.success])
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createState.success, updateState.success, deleteState.success, incomeState.success, createState.error, updateState.error, deleteState.error, incomeState.error])
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (catCreateState.success || catUpdateState.success || catDeleteState.success) {
+      setToastType('success')
+      setToastMessage(catCreateState.message || catUpdateState.message || catDeleteState.message || 'Lưu danh mục thành công!')
       resetCategoryForm()
+    } else if (catCreateState.error || catUpdateState.error || catDeleteState.error) {
+      setToastType('error')
+      setToastMessage(catCreateState.error || catUpdateState.error || catDeleteState.error || 'Lỗi danh mục!')
     }
-  }, [catCreateState.success, catUpdateState.success, catDeleteState.success])
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catCreateState.success, catUpdateState.success, catDeleteState.success, catCreateState.error, catUpdateState.error, catDeleteState.error])
 
   function openCreate() {
     setSelectedAccount(null)
     setPreviewQty('')
     setPreviewPurchasePrice('')
-    setPreviewPrice('')
     setPreviewTicker('')
     setSelectedCategoryId(categories[0]?.id || '')
     setSelectedCurrency('VND')
@@ -130,11 +158,19 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setModalMode('create')
   }
 
+  function openIncome() {
+    setIncomeAmount('')
+    setIncomeDate(getTodayString())
+    setIncomeDesc('')
+    setSelectedIncomeWalletId(walletAccounts[0]?.id || '')
+    setSelectedIncomeCategoryId(incomeCategories[0]?.id || '')
+    setModalMode('income')
+  }
+
   function openEdit(account: AssetAccount) {
     setSelectedAccount(account)
     setPreviewQty(String(account.quantity))
     setPreviewPurchasePrice(String(account.purchase_unit_price ?? account.unit_price))
-    setPreviewPrice(String(account.unit_price))
     setPreviewTicker(account.ticker || '')
     setSelectedCategoryId(account.category_id)
     setSelectedCurrency(account.currency)
@@ -157,11 +193,12 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setSelectedAccount(null)
     setPreviewQty('')
     setPreviewPurchasePrice('')
-    setPreviewPrice('')
     setPreviewTicker('')
     setSelectedCategoryId('')
     setSelectedCurrency('VND')
     setPurchaseDate('')
+    setIncomeAmount('')
+    setIncomeDesc('')
     formRef.current?.reset()
   }
 
@@ -235,7 +272,16 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
             {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ giá'}
           </button>
           <button className="btn btn--ghost cursor-pointer" onClick={openCategories} id="manage-cats-btn">
-            Quản lý danh mục
+            Danh mục tài sản
+          </button>
+          <button 
+            className="btn btn--ghost flex items-center gap-1.5 cursor-pointer"
+            onClick={openIncome}
+            disabled={walletAccounts.length === 0 || incomeCategories.length === 0}
+            id="add-income-btn"
+          >
+            <Plus size={15} />
+            Nhập thu nhập
           </button>
           <button 
             className="btn btn--primary cursor-pointer" 
@@ -714,6 +760,139 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
         </div>
       )}
 
+      {/* ── Modal: Log Income ── */}
+      {modalMode === 'income' && (
+        <div className="modal-overlay" onClick={closeModal} role="dialog" aria-modal="true">
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">Nhập thu nhập mới</h2>
+              <button className="modal__close" onClick={closeModal} aria-label="Đóng">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form
+              ref={formRef}
+              action={incomeAction}
+              className="modal__form"
+            >
+              <input type="hidden" name="type" value="income" />
+
+              {/* Target wallet selection */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="income-wallet">
+                  Tài khoản nhận / Ví <span className="required">*</span>
+                </label>
+                <select
+                  id="income-wallet"
+                  name="account_id"
+                  className="form-select"
+                  value={selectedIncomeWalletId}
+                  onChange={(e) => setSelectedIncomeWalletId(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>-- Chọn ví / tài khoản nhận --</option>
+                  {walletAccounts.map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name} ({acc.currency === 'USD' ? '$' : '₫'}{Number(acc.quantity).toLocaleString('vi-VN')} {acc.currency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Income Category selection */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="income-category">
+                  Danh mục thu nhập <span className="required">*</span>
+                </label>
+                <select
+                  id="income-category"
+                  name="category_id"
+                  className="form-select"
+                  value={selectedIncomeCategoryId}
+                  onChange={(e) => setSelectedIncomeCategoryId(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>-- Chọn danh mục thu nhập --</option>
+                  {incomeCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Amount input */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="income-amount">
+                  Số tiền <span className="required">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="income-amount"
+                    name="amount"
+                    type="number"
+                    className="form-input pr-12"
+                    value={incomeAmount}
+                    onChange={(e) => setIncomeAmount(e.target.value)}
+                    step="any"
+                    min="0.01"
+                    placeholder="0"
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 font-bold text-sm">
+                    {walletAccounts.find((w) => w.id === selectedIncomeWalletId)?.currency || 'VND'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="income-date">
+                  Ngày nhận <span className="required">*</span>
+                </label>
+                <DatePicker
+                  id="income-date"
+                  name="transaction_date"
+                  selectedDate={incomeDate}
+                  onChange={setIncomeDate}
+                />
+              </div>
+
+              {/* Description */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="income-desc">
+                  Mô tả / Ghi chú <span className="optional">(tùy chọn)</span>
+                </label>
+                <textarea
+                  id="income-desc"
+                  name="description"
+                  className="form-textarea"
+                  value={incomeDesc}
+                  onChange={(e) => setIncomeDesc(e.target.value)}
+                  placeholder="Lương tháng 6, Tiền thưởng dự án..."
+                  rows={2}
+                  maxLength={500}
+                />
+              </div>
+
+              {/* Error */}
+              {incomeState.error && <p className="form-error">{incomeState.error}</p>}
+
+              {/* Actions */}
+              <div className="modal__footer">
+                <button type="button" className="btn btn--ghost" onClick={closeModal}>
+                  Hủy
+                </button>
+                <button type="submit" className="btn btn--primary" disabled={incomePending}>
+                  {incomePending ? 'Đang lưu...' : 'Lưu thu nhập'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <ConfirmationModal
         isOpen={modalMode === 'delete' && selectedAccount !== null}
         title="Xóa tài sản"
@@ -740,7 +919,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
         <div className="modal-overlay" onClick={closeModal} role="dialog" aria-modal="true">
           <div className="modal" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal__header">
-              <h2 className="modal__title">Quản lý danh mục tài sản</h2>
+              <h2 className="modal__title">Danh mục tài sản</h2>
               <button className="modal__close" onClick={closeModal} aria-label="Đóng">
                 <X size={20} />
               </button>
@@ -755,7 +934,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 className="flex flex-col gap-4 border dark:border-slate-800 border-slate-200 p-4 rounded-xl dark:bg-slate-900/30 bg-slate-50/50"
               >
                 <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                  {isEditingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
+                  {isEditingCategory ? 'Chỉnh sửa danh mục tài sản' : 'Thêm danh mục tài sản mới'}
                 </h3>
 
                 {isEditingCategory && selectedCategory && (
@@ -764,7 +943,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
 
                 {/* Name */}
                 <div className="form-field">
-                  <label className="form-label text-xs">Tên danh mục</label>
+                  <label className="form-label text-xs">Tên danh mục tài sản</label>
                   <input
                     name="name"
                     type="text"

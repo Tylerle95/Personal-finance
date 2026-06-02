@@ -1,9 +1,13 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserAssetCategories } from '@/lib/data/assets'
+import { getUserCategoriesByType } from '@/lib/data/assets'
 import CategoryClient from './CategoryClient'
 
-export default async function CategoriesPage() {
+interface PageProps {
+  searchParams: Promise<{ type?: string }>
+}
+
+export default async function CategoriesPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -13,7 +17,11 @@ export default async function CategoriesPage() {
     redirect('/login')
   }
 
-  const categories = await getUserAssetCategories(user.id)
+  const resolvedParams = await searchParams
+  const typeParam = resolvedParams.type
+  const activeType = typeParam === 'spending' ? 'spending' : (typeParam === 'income' ? 'income' : 'asset')
 
-  return <CategoryClient categories={categories} />
+  const categories = await getUserCategoriesByType(user.id, activeType)
+
+  return <CategoryClient categories={categories} activeType={activeType} />
 }

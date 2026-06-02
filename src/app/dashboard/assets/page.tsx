@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserAssetAccounts, getUserAssetCategories } from '@/lib/data/assets'
+import { getUserAssetAccounts, getUserAssetCategories, getUserCategoriesByType } from '@/lib/data/assets'
 import AssetClient from './AssetClient'
 
 export default async function AssetsPage() {
@@ -13,11 +13,18 @@ export default async function AssetsPage() {
     redirect('/login')
   }
 
-  const [accounts, categories] = await Promise.all([
+  const [accounts, categories, incomeCategories] = await Promise.all([
     getUserAssetAccounts(user.id),
     getUserAssetCategories(user.id),
+    getUserCategoriesByType(user.id, 'income'),
   ])
 
-  return <AssetClient accounts={accounts} categories={categories} />
+  return (
+    <AssetClient 
+      accounts={accounts} 
+      categories={categories} 
+      incomeCategories={incomeCategories} 
+    />
+  )
 }
 

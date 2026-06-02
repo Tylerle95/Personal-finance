@@ -12,9 +12,10 @@ const INITIAL_STATE: ActionResult = { error: null, success: false, message: null
 
 interface CategoryClientProps {
   categories: AssetCategory[]
+  activeType: 'asset' | 'spending' | 'income'
 }
 
-export default function CategoryClient({ categories }: CategoryClientProps) {
+export default function CategoryClient({ categories, activeType }: CategoryClientProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
   
@@ -41,9 +42,11 @@ export default function CategoryClient({ categories }: CategoryClientProps) {
   }, [createState.success, updateState.success])
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (deleteState.success) {
       setCategoryToDelete(null)
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [deleteState.success])
 
   function resetForm() {
@@ -79,7 +82,9 @@ export default function CategoryClient({ categories }: CategoryClientProps) {
       <div className="assets-page__header mb-8">
         <div className="assets-page__title-wrap">
           <FolderKanban className="assets-page__title-icon" size={28} />
-          <h1 className="assets-page__title">Danh mục của tôi</h1>
+          <h1 className="assets-page__title">
+            {activeType === 'asset' ? 'Danh mục tài sản' : activeType === 'spending' ? 'Danh mục chi tiêu' : 'Danh mục thu nhập'}
+          </h1>
         </div>
       </div>
 
@@ -92,8 +97,12 @@ export default function CategoryClient({ categories }: CategoryClientProps) {
             className="flex flex-col gap-5 border border-glass-border bg-glass-bg backdrop-blur-md p-6 rounded-2xl shadow-card-shadow"
           >
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-              {isEditing ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
+              {isEditing 
+                ? (activeType === 'asset' ? 'Chỉnh sửa danh mục tài sản' : activeType === 'spending' ? 'Chỉnh sửa danh mục chi tiêu' : 'Chỉnh sửa danh mục thu nhập')
+                : (activeType === 'asset' ? 'Thêm danh mục tài sản mới' : activeType === 'spending' ? 'Thêm danh mục chi tiêu mới' : 'Thêm danh mục thu nhập mới')}
             </h3>
+
+            <input type="hidden" name="type" value={activeType} />
 
             {isEditing && selectedCategory && (
               <input type="hidden" name="id" value={selectedCategory.id} />
@@ -111,7 +120,9 @@ export default function CategoryClient({ categories }: CategoryClientProps) {
                 className="form-input text-sm p-3 border border-glass-border bg-background/50 rounded-xl"
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
-                placeholder="VD: Vàng miếng, Crypto, Chứng khoán..."
+                placeholder={activeType === 'asset' 
+                  ? 'VD: Vàng miếng, Crypto, Chứng khoán...' 
+                  : activeType === 'spending' ? 'VD: Điện, Nước, Ăn uống...' : 'VD: Lương, Kinh doanh, Thưởng...'}
                 required
                 maxLength={100}
                 disabled={isPending}
@@ -285,10 +296,12 @@ export default function CategoryClient({ categories }: CategoryClientProps) {
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={categoryToDelete !== null}
-        title="Xóa danh mục tài sản"
+        title={activeType === 'asset' ? 'Xóa danh mục tài sản' : activeType === 'spending' ? 'Xóa danh mục chi tiêu' : 'Xóa danh mục thu nhập'}
         message={
           categoryToDelete
-            ? `Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete.name}"? Tất cả tài khoản tài sản thuộc danh mục này cũng sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+            ? (activeType === 'asset' 
+                ? `Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete.name}"? Tất cả tài khoản tài sản thuộc danh mục này cũng sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+                : `Bạn có chắc chắn muốn xóa danh mục "${categoryToDelete.name}"? Các giao dịch thuộc danh mục này sẽ mất liên kết với danh mục.`)
             : ''
         }
         confirmText="Xóa danh mục"

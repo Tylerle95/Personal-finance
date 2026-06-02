@@ -162,9 +162,6 @@ export default function SpendingClient({
     .filter(tx => tx.type === 'expense' && new Date(tx.transaction_date).getMonth() === currentMonth && new Date(tx.transaction_date).getFullYear() === currentYear)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const monthlyIncomeTotal = initialTransactions
-    .filter(tx => tx.type === 'income' && new Date(tx.transaction_date).getMonth() === currentMonth && new Date(tx.transaction_date).getFullYear() === currentYear)
-    .reduce((sum, tx) => sum + tx.amount, 0)
 
   return (
     <div className="assets-page">
@@ -190,7 +187,7 @@ export default function SpendingClient({
         </div>
         <div className="flex gap-2">
           <button className="btn btn--ghost cursor-pointer" onClick={openCategories} id="manage-spending-cats-btn">
-            Quản lý danh mục chi
+            Danh mục chi tiêu
           </button>
           <button 
             className="btn btn--primary cursor-pointer" 
@@ -205,14 +202,10 @@ export default function SpendingClient({
       </div>
 
       {/* ── Monthly Overview Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl p-5 shadow-card-shadow">
           <span className="text-xs text-slate-400 font-bold block mb-1">CHI TIÊU THÁNG NÀY</span>
           <span className="text-2xl font-bold text-rose-500">{VND.format(monthlyExpenseTotal)}</span>
-        </div>
-        <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl p-5 shadow-card-shadow">
-          <span className="text-xs text-slate-400 font-bold block mb-1">THU NHẬP THÁNG NÀY</span>
-          <span className="text-2xl font-bold text-emerald-500">{VND.format(monthlyIncomeTotal)}</span>
         </div>
         <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl p-5 shadow-card-shadow">
           <span className="text-xs text-slate-400 font-bold block mb-1">TỔNG NGUỒN TIỀN/VÍ KHẢ DỤNG</span>
@@ -228,7 +221,7 @@ export default function SpendingClient({
           <div className="assets-empty__icon">💳</div>
           <h2 className="assets-empty__title">Chưa có ví hoặc nguồn tiền nào</h2>
           <p className="assets-empty__desc">
-            Vui lòng thêm ít nhất một tài khoản Tiền mặt hoặc Ngân hàng trong mục "Tài sản & Số dư" trước khi bắt đầu nhập hóa đơn chi tiêu.
+            {"Vui lòng thêm ít nhất một tài khoản Tiền mặt hoặc Ngân hàng trong mục \"Tài sản & Số dư\" trước khi bắt đầu nhập hóa đơn chi tiêu."}
           </p>
         </div>
       ) : spendingCategories.length === 0 ? (
@@ -359,35 +352,7 @@ export default function SpendingClient({
                 <input type="hidden" name="id" value={selectedTx.id} />
               )}
 
-              {/* Transaction Type Toggle */}
-              <div className="form-field">
-                <label className="form-label">Loại giao dịch <span className="required">*</span></label>
-                <input type="hidden" name="type" value={txType} />
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    className={`py-2 px-4 rounded-xl border text-sm font-bold text-center transition-all cursor-pointer ${
-                      txType === 'expense'
-                        ? 'bg-rose-500/10 text-rose-500 border-rose-500/35'
-                        : 'border-glass-border text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/50'
-                    }`}
-                    onClick={() => setTxType('expense')}
-                  >
-                    Chi tiêu (Hóa đơn)
-                  </button>
-                  <button
-                    type="button"
-                    className={`py-2 px-4 rounded-xl border text-sm font-bold text-center transition-all cursor-pointer ${
-                      txType === 'income'
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/35'
-                        : 'border-glass-border text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/50'
-                    }`}
-                    onClick={() => setTxType('income')}
-                  >
-                    Thu nhập
-                  </button>
-                </div>
-              </div>
+              <input type="hidden" name="type" value="expense" />
 
               {/* Wallet/Source account Selection */}
               <div className="form-field">
