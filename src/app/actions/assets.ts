@@ -456,9 +456,8 @@ export async function syncAssetPrices(): Promise<ActionResult> {
     return { error: null, success: true, message: 'Không có tài sản nào cần đồng bộ giá.' }
   }
 
-  let updatedCount = 0
-  for (const account of accounts) {
-    if (!account.ticker) continue
+  const syncPromises = accounts.map(async (account) => {
+    if (!account.ticker) return false
     const catName = (account.category as any)?.name
     const newPrice = await fetchLivePrice(account.ticker, catName)
     
@@ -468,12 +467,13 @@ export async function syncAssetPrices(): Promise<ActionResult> {
         .update({ unit_price: newPrice, updated_at: new Date().toISOString() })
         .eq('id', account.id)
         .eq('user_id', user.id)
-        
-      if (!updateError) {
-        updatedCount++
-      }
+      return !updateError
     }
-  }
+    return false
+  })
+
+  const results = await Promise.all(syncPromises)
+  const updatedCount = results.filter(Boolean).length
 
   revalidatePath('/dashboard/assets')
   revalidatePath('/dashboard')

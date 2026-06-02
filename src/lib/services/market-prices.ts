@@ -49,7 +49,10 @@ async function fetchGoldPrice(ticker: string): Promise<number | null> {
 
 async function fetchCryptoPrice(ticker: string): Promise<number | null> {
   try {
-    const cleanTicker = ticker.toUpperCase().replace(/\s+/g, '');
+    let cleanTicker = ticker.toUpperCase().replace(/\s+/g, '');
+    if (cleanTicker.endsWith('USDT') && cleanTicker !== 'USDT') {
+      cleanTicker = cleanTicker.slice(0, -4);
+    }
     // Fetch price in USDT
     const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${cleanTicker}USDT`, {
       next: { revalidate: 60 }
