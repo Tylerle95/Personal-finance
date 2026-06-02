@@ -19,6 +19,7 @@ import {
   deleteAssetCategory,
 } from '@/app/actions/assets'
 import AssetCard from '@/components/ui/AssetCard'
+import DatePicker from '@/components/ui/DatePicker'
 
 const INITIAL_STATE: ActionResult = { error: null, success: false, message: null }
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -46,6 +47,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [previewPrice, setPreviewPrice] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState('VND')
+  const [purchaseDate, setPurchaseDate] = useState('')
 
   const formRef = useRef<HTMLFormElement>(null)
   const categoryFormRef = useRef<HTMLFormElement>(null)
@@ -58,6 +60,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [catCreateState, catCreateAction, catCreatePending] = useActionState(createAssetCategory, INITIAL_STATE)
   const [catUpdateState, catUpdateAction, catUpdatePending] = useActionState(updateAssetCategory, INITIAL_STATE)
   const [catDeleteState, catDeleteAction, catDeletePending] = useActionState(deleteAssetCategory, INITIAL_STATE)
+
+  const getTodayString = () => new Date().toISOString().split('T')[0]
 
   // Reset forms and close modal on success
   useEffect(() => {
@@ -78,6 +82,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setPreviewPrice('')
     setSelectedCategoryId(categories[0]?.id || '')
     setSelectedCurrency('VND')
+    setPurchaseDate(getTodayString())
     setModalMode('create')
   }
 
@@ -87,6 +92,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setPreviewPrice(String(account.unit_price))
     setSelectedCategoryId(account.category_id)
     setSelectedCurrency(account.currency)
+    setPurchaseDate(account.purchase_date ? account.purchase_date.split('T')[0] : getTodayString())
     setModalMode('edit')
   }
 
@@ -107,6 +113,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setPreviewPrice('')
     setSelectedCategoryId('')
     setSelectedCurrency('VND')
+    setPurchaseDate('')
     formRef.current?.reset()
   }
 
@@ -291,17 +298,11 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 <label className="form-label" htmlFor="asset-purchase-date">
                   Ngày mua / Ngày sở hữu <span className="required">*</span>
                 </label>
-                <input
+                <DatePicker
                   id="asset-purchase-date"
                   name="purchase_date"
-                  type="date"
-                  className="form-input"
-                  defaultValue={
-                    selectedAccount 
-                      ? selectedAccount.purchase_date.split('T')[0] 
-                      : new Date().toISOString().split('T')[0]
-                  }
-                  required
+                  selectedDate={purchaseDate}
+                  onChange={setPurchaseDate}
                 />
               </div>
 
