@@ -20,7 +20,7 @@
 
 **Purpose**: Project environment check and localization setup
 
-- [ ] T001 Update translation keys `navAssets` (to "Lịch sử giao dịch" / "Transaction History") and add `navCategories` (to "Danh mục của tôi" / "My Categories") in `src/components/providers.tsx`
+- [x] T001 Update translation keys `navAssets` (to "Lịch sử giao dịch" / "Transaction History") and add `navCategories` (to "Danh mục của tôi" / "My Categories") in `src/components/providers.tsx`
 
 ---
 
@@ -30,8 +30,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Create reusable confirmation popup modal `src/components/ui/ConfirmationModal.tsx` following glassmorphic styling constraints
-- [ ] T003 [P] Create reusable circular/donut chart component `src/components/ui/CircularAllocationChart.tsx` using native SVG with hover animations and tooltips
+- [x] T002 Create reusable confirmation popup modal `src/components/ui/ConfirmationModal.tsx` following glassmorphic styling constraints
+- [x] T003 [P] Create reusable circular/donut chart component `src/components/ui/CircularAllocationChart.tsx` using native SVG with hover animations and tooltips
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -45,8 +45,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Refactor `src/app/dashboard/DashboardLayoutClient.tsx` to hide text labels completely and center icons in collapsed mode. Add HTML tooltips to menu item icons.
-- [ ] T005 [US1] Add "Danh mục của tôi" link with the `FolderKanban` icon to both the sidebar and mobile bottom navigation in `src/app/dashboard/DashboardLayoutClient.tsx`
+- [x] T004 [US1] Refactor `src/app/dashboard/DashboardLayoutClient.tsx` to hide text labels completely and center icons in collapsed mode. Add HTML tooltips to menu item icons.
+- [x] T005 [US1] Add "Danh mục của tôi" link with the `FolderKanban` icon to both the sidebar and mobile bottom navigation in `src/app/dashboard/DashboardLayoutClient.tsx`
 
 **Checkpoint**: User Story 1 is functional. The collapsible sidebar behavior works correctly on both desktop and mobile navigation layouts.
 
@@ -60,8 +60,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T006 [P] [US2] Create the category page route server file `src/app/dashboard/categories/page.tsx` retrieving user categories from Supabase
-- [ ] T007 [US2] Create Client Component `src/app/dashboard/categories/CategoryClient.tsx` representing the full-screen category management table list and creation/editing form. Integrate `ConfirmationModal` on delete buttons.
+- [x] T006 [P] [US2] Create the category page route server file `src/app/dashboard/categories/page.tsx` retrieving user categories from Supabase
+- [x] T007 [US2] Create Client Component `src/app/dashboard/categories/CategoryClient.tsx` representing the full-screen category management table list and creation/editing form. Integrate `ConfirmationModal` on delete buttons.
 
 **Checkpoint**: User Story 2 is functional. Users can access a separate view for full category CRUD.
 
@@ -75,8 +75,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T008 [US3] Refactor title elements and headers in `src/app/dashboard/assets/AssetClient.tsx` from "Tài sản của tôi" to "Lịch sử giao dịch"
-- [ ] T009 [US3] Refactor `src/app/dashboard/assets/AssetClient.tsx` to display the accounts as rows in an HTML `<table>` (collapsing responsively on mobile) instead of a card grid. Integrate `ConfirmationModal` on asset delete actions.
+- [x] T008 [US3] Refactor title elements and headers in `src/app/dashboard/assets/AssetClient.tsx` from "Tài sản của tôi" to "Lịch sử giao dịch"
+- [x] T009 [US3] Refactor `src/app/dashboard/assets/AssetClient.tsx` to display the accounts as rows in an HTML `<table>` (collapsing responsively on mobile) instead of a card grid. Integrate `ConfirmationModal` on asset delete actions.
 
 **Checkpoint**: User Story 3 is functional. The asset accounts list is renamed and displayed in rows.
 
@@ -90,8 +90,8 @@
 
 ### Implementation for User Story 4
 
-- [ ] T010 [P] [US4] Update `src/components/ui/AllocationChart.tsx` to render the newly created `CircularAllocationChart` component instead of `allocation-bar`
-- [ ] T011 [US4] Refactor tooltip styles and legend alignment in `src/components/ui/CircularAllocationChart.tsx` to align neatly with the dashboard overview layout
+- [x] T010 [P] [US4] Update `src/components/ui/AllocationChart.tsx` to render the newly created `CircularAllocationChart` component instead of `allocation-bar`
+- [x] T011 [US4] Refactor tooltip styles and legend alignment in `src/components/ui/CircularAllocationChart.tsx` to align neatly with the dashboard overview layout
 
 **Checkpoint**: User Story 4 is functional. Dashboard correctly displays the donut allocation chart.
 
@@ -105,8 +105,8 @@
 
 ### Implementation for User Story 5
 
-- [ ] T012 [US5] Integrate `ConfirmationModal` with the Logout button in the header of `src/app/dashboard/DashboardLayoutClient.tsx` to prompt users before triggering the `signOut` Action
-- [ ] T013 [P] [US5] Verify that all delete operations in `src/app/dashboard/assets/AssetClient.tsx` and `src/app/dashboard/categories/CategoryClient.tsx` correctly prompt the user through the modal
+- [x] T012 [US5] Integrate `ConfirmationModal` with the Logout button in the header of `src/app/dashboard/DashboardLayoutClient.tsx` to prompt users before triggering the `signOut` Action
+- [x] T013 [P] [US5] Verify that all delete operations in `src/app/dashboard/assets/AssetClient.tsx` and `src/app/dashboard/categories/CategoryClient.tsx` correctly prompt the user through the modal
 
 **Checkpoint**: User Story 5 is functional. All confirmation modal flows are complete.
 
@@ -116,8 +116,8 @@
 
 **Purpose**: Final verification and styling adjustments
 
-- [ ] T014 Run validation scenarios in [quickstart.md](./quickstart.md) to check overall user experience
-- [ ] T015 Verify glassmorphic designs (borders, dark mode contrast, responsiveness) match premium UI UX guidelines
+- [x] T014 Run validation scenarios in [quickstart.md](./quickstart.md) to check overall user experience
+- [x] T015 Verify glassmorphic designs (borders, dark mode contrast, responsiveness) match premium UI UX guidelines
 
 ---
 

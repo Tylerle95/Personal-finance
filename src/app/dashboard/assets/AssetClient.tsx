@@ -18,8 +18,9 @@ import {
   updateAssetCategory,
   deleteAssetCategory,
 } from '@/app/actions/assets'
-import AssetCard from '@/components/ui/AssetCard'
 import DatePicker from '@/components/ui/DatePicker'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
+import { useLanguage } from '@/components/providers'
 
 const INITIAL_STATE: ActionResult = { error: null, success: false, message: null }
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -32,6 +33,7 @@ interface AssetClientProps {
 }
 
 export default function AssetClient({ accounts, categories }: AssetClientProps) {
+  const { t } = useLanguage()
   const [modalMode, setModalMode] = useState<ModalMode>(null)
   const [selectedAccount, setSelectedAccount] = useState<AssetAccount | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
@@ -160,7 +162,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
       <div className="assets-page__header">
         <div className="assets-page__title-wrap">
           <FolderKanban className="assets-page__title-icon" size={28} />
-          <h1 className="assets-page__title">Tài sản của tôi</h1>
+          <h1 className="assets-page__title">{t('navAssets')}</h1>
         </div>
         <div className="flex gap-2">
           <button className="btn btn--ghost" onClick={openCategories} id="manage-cats-btn">
@@ -203,15 +205,128 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
           </button>
         </div>
       ) : (
-        <div className="assets-grid">
-          {accounts.map((account) => (
-            <AssetCard
-              key={account.id}
-              account={account}
-              onEdit={openEdit}
-              onDelete={openDelete}
-            />
-          ))}
+        <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl shadow-card-shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-glass-border dark:bg-slate-900/10 bg-slate-50/20 text-xs uppercase tracking-wider text-slate-400 font-bold">
+                  <th className="p-4 pl-6">Tài sản</th>
+                  <th className="p-4">Danh mục</th>
+                  <th className="p-4 hidden sm:table-cell">Ngày sở hữu</th>
+                  <th className="p-4 hidden md:table-cell">Chi tiết số lượng / đơn giá</th>
+                  <th className="p-4 text-right pr-6">Tổng giá trị</th>
+                  <th className="p-4 text-right pr-6">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accounts.map((account) => {
+                  const category = account.category
+                  const categoryColor = category?.color || '#94a3b8'
+                  const categoryName = category?.name || 'Chưa phân loại'
+                  const isCash = categoryName ? /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName) : false
+                  const IconComp = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[category?.icon || 'Wallet'] || Icons.Wallet
+
+                  return (
+                    <tr
+                      key={account.id}
+                      className="border-b border-glass-border/60 hover:bg-slate-50/30 dark:hover:bg-slate-900/10 transition-colors"
+                    >
+                      {/* Name & Icon */}
+                      <td className="p-4 pl-6">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: `${categoryColor}15` }}
+                          >
+                            <IconComp size={16} style={{ color: categoryColor }} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                              {account.name}
+                            </span>
+                            {account.description && (
+                              <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[150px]">
+                                {account.description}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category Badge */}
+                      <td className="p-4">
+                        <span
+                          className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block"
+                          style={{ color: categoryColor, background: `${categoryColor}10` }}
+                        >
+                          {categoryName}
+                        </span>
+                      </td>
+
+                      {/* Purchase Date */}
+                      <td className="p-4 text-xs text-slate-500 dark:text-slate-400 hidden sm:table-cell">
+                        {account.purchase_date ? new Date(account.purchase_date).toLocaleDateString('vi-VN') : 'N/A'}
+                      </td>
+
+                      {/* Details (qty x price) */}
+                      <td className="p-4 text-xs text-slate-500 dark:text-slate-400 hidden md:table-cell">
+                        {isCash ? (
+                          <span>Số dư</span>
+                        ) : (
+                          <span>
+                            {account.quantity.toLocaleString('vi-VN', { maximumFractionDigits: 8 })} ×{' '}
+                            {account.currency === 'USD'
+                              ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.unit_price)
+                              : VND.format(account.unit_price)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Total Value */}
+                      <td className="p-4 text-right pr-6">
+                        {account.currency === 'USD' ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.quantity * account.unit_price)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                              ≈ {VND.format(account.total_value)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                            {VND.format(account.total_value)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action buttons */}
+                      <td className="p-4 text-right pr-6">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(account)}
+                            className="p-2 text-slate-400 hover:text-violet-500 dark:hover:text-violet-400 hover:bg-glass-bg border border-transparent hover:border-glass-border rounded-lg transition-colors cursor-pointer"
+                            title="Sửa"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openDelete(account)}
+                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-glass-bg border border-transparent hover:border-glass-border rounded-lg transition-colors cursor-pointer"
+                            title="Xóa"
+                          >
+                            <Trash size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -422,37 +537,26 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
         </div>
       )}
 
-      {/* ── Modal: Delete Account Confirmation ── */}
-      {modalMode === 'delete' && selectedAccount && (
-        <div className="modal-overlay" onClick={closeModal} role="dialog" aria-modal="true">
-          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal__header">
-              <h2 className="modal__title">Xóa tài sản</h2>
-              <button className="modal__close" onClick={closeModal} aria-label="Đóng">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal__body">
-              <p className="modal__confirm-text">
-                Bạn có chắc muốn xóa tài sản{' '}
-                <strong>&ldquo;{selectedAccount.name}&rdquo;</strong>? Hành động này không thể hoàn tác.
-              </p>
-            </div>
-            <form action={deleteAction}>
-              <input type="hidden" name="id" value={selectedAccount.id} />
-              {deleteState.error && <p className="form-error">{deleteState.error}</p>}
-              <div className="modal__footer">
-                <button type="button" className="btn btn--ghost" onClick={closeModal}>
-                  Hủy
-                </button>
-                <button type="submit" className="btn btn--danger" disabled={deletePending}>
-                  {deletePending ? 'Đang xóa...' : 'Xóa tài sản'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={modalMode === 'delete' && selectedAccount !== null}
+        title="Xóa tài sản"
+        message={
+          selectedAccount
+            ? `Bạn có chắc chắn muốn xóa tài sản "${selectedAccount.name}"? Hành động này không thể hoàn tác.`
+            : ''
+        }
+        confirmText="Xóa tài sản"
+        cancelText="Hủy"
+        isPending={deletePending}
+        isDanger={true}
+        onConfirm={async () => {
+          if (!selectedAccount) return
+          const formData = new FormData()
+          formData.append('id', selectedAccount.id)
+          await deleteAction(formData)
+        }}
+        onClose={closeModal}
+      />
 
       {/* ── Modal: Manage Categories ── */}
       {modalMode === 'categories' && (

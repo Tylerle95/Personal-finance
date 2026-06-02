@@ -55,6 +55,7 @@ export async function createAssetCategory(
   }
 
   revalidatePath('/dashboard/assets')
+  revalidatePath('/dashboard/categories')
   revalidatePath('/dashboard')
   return {
     error: null,
@@ -117,6 +118,7 @@ export async function updateAssetCategory(
   }
 
   revalidatePath('/dashboard/assets')
+  revalidatePath('/dashboard/categories')
   revalidatePath('/dashboard')
   return { error: null, success: true, message: 'Danh mục đã được cập nhật!' }
 }
@@ -150,6 +152,7 @@ export async function deleteAssetCategory(
   }
 
   revalidatePath('/dashboard/assets')
+  revalidatePath('/dashboard/categories')
   revalidatePath('/dashboard')
   return { error: null, success: true, message: 'Danh mục đã được xóa thành công!' }
 }
