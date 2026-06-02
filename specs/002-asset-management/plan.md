@@ -106,11 +106,18 @@ src/
 
 ### Screen 3: Add / Edit Asset Modal
 - Dropdown select for Category (fetching user's custom categories).
-- Fields: Name, Category, Quantity, Unit Price, Description (optional).
-- Live preview calculating: `Total value = Quantity × Unit Price`.
+- Fields:
+  - **Tên tài sản (Name)**: Text input (optional, defaults to the selected Category's name if left blank).
+  - **Danh mục (Category)**: Select dropdown.
+  - **Tiền tệ (Currency)**: Select dropdown supporting `VND` and `USD`.
+  - **Ngày mua / ngày sở hữu (Purchase Date)**: Date input picker, defaulting to the current date.
+  - **Dynamic Input Fields**:
+    - If the selected Category's name contains cash/bank keywords (e.g. "Tiền mặt", "Ngân hàng", "Cash", "Bank", "Ví"), display a single **"Số dư / Giá trị"** (Balance / Value) number input. Under the hood, this sets `quantity = [Value]` and `unit_price = 1`.
+    - Otherwise (e.g. for investments, crypto, gold), display separate **"Số lượng"** (Quantity) and **"Đơn giá"** (Unit Price) inputs.
+- Live preview calculating: `Total value = Quantity × Unit Price` (or `Total value = Balance` for cash categories). If currency is `USD`, calculate the value in USD and display the estimated VND conversion using the fixed rate.
 
 ### Screen 4: Dashboard Net Worth Widget
-- Total Net Worth value.
+- Total Net Worth value (sum of all asset accounts in VND).
 - Donut or horizontal bar chart showing percentages of asset allocation grouped by custom Category.
 
 ---
@@ -120,4 +127,6 @@ src/
 1. **Decimal display**: Quantity decimals determined by type or category name hint, defaulting to standard locale rules. Support up to 8 decimal places for precise asset types (like crypto).
 2. **Category Cascade**: Deleting a category will cascade delete all linked accounts. Warn the user before confirming category deletion.
 3. **RLS**: Row-Level Security enabled on `asset_categories` and `asset_accounts` using `auth.uid() = user_id`. All queries in `src/lib/data/assets.ts` use the server-side Supabase client (`createClient()` from `src/lib/supabase/server.ts`) which automatically scopes queries to the authenticated user.
-4. **`updated_at` trigger**: Applied automatically via DB trigger; no application-layer logic needed.
+4. **Multi-Currency (USD/VND)**: The base currency for Net Worth calculation is VND. USD asset balances/valuations are converted to VND using a fixed exchange rate of **1 USD = 25,000 VND**.
+5. **Purchase Date**: Every asset account record includes a `purchase_date` of type `DATE` representing the date of acquisition, defaulting to the current date.
+6. **`updated_at` trigger**: Applied automatically via DB trigger; no application-layer logic needed.

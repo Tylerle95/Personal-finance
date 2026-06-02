@@ -51,5 +51,5 @@ This project is indexed by GitNexus as **Personal-finance** (505 symbols, 621 re
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/003-dashboard-ui-refactor/plan.md](file:///Users/tylerle/Documents/Me/Personal-finance/specs/003-dashboard-ui-refactor/plan.md)
+[specs/004-dashboard-refinements/plan.md](file:///Users/tylerle/Documents/Me/Personal-finance/specs/004-dashboard-refinements/plan.md)
 <!-- SPECKIT END -->

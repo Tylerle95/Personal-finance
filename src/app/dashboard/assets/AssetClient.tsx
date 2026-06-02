@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useActionState, useEffect, useRef } from 'react'
-import { Plus, X, FolderKanban, Pencil, Trash, Check } from 'lucide-react'
+import { Plus, X, FolderKanban, Pencil, Trash, Check, RotateCw } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { 
   AssetAccount, 
@@ -17,8 +17,11 @@ import {
   createAssetCategory,
   updateAssetCategory,
   deleteAssetCategory,
+  syncAssetPrices,
 } from '@/app/actions/assets'
-import AssetCard from '@/components/ui/AssetCard'
+import DatePicker from '@/components/ui/DatePicker'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
+import { useLanguage } from '@/components/providers'
 
 const INITIAL_STATE: ActionResult = { error: null, success: false, message: null }
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -31,6 +34,7 @@ interface AssetClientProps {
 }
 
 export default function AssetClient({ accounts, categories }: AssetClientProps) {
+  const { t } = useLanguage()
   const [modalMode, setModalMode] = useState<ModalMode>(null)
   const [selectedAccount, setSelectedAccount] = useState<AssetAccount | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
@@ -41,12 +45,49 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [categoryColor, setCategoryColor] = useState(PREDEFINED_COLORS[0].hex)
   const [categoryIcon, setCategoryIcon] = useState(PREDEFINED_ICONS[0])
 
-  // Form fields for live preview
+  // Form fields for live preview and conditional inputs
   const [previewQty, setPreviewQty] = useState('')
+  const [previewPurchasePrice, setPreviewPurchasePrice] = useState('')
   const [previewPrice, setPreviewPrice] = useState('')
+  const [previewTicker, setPreviewTicker] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedCurrency, setSelectedCurrency] = useState('VND')
+  const [purchaseDate, setPurchaseDate] = useState('')
+  
+  // Sync state
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [toastType, setToastType] = useState<'success' | 'error'>('success')
 
   const formRef = useRef<HTMLFormElement>(null)
   const categoryFormRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
+
+  async function handleSyncPrices() {
+    setIsSyncing(true)
+    try {
+      const res = await syncAssetPrices()
+      if (res.success) {
+        setToastType('success')
+        setToastMessage(res.message || 'Đã đồng bộ giá thành công!')
+      } else {
+        setToastType('error')
+        setToastMessage(res.error || 'Có lỗi xảy ra khi đồng bộ giá.')
+      }
+    } catch (err) {
+      console.error(err)
+      setToastType('error')
+      setToastMessage('Lỗi kết nối khi đồng bộ giá.')
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   // Action States
   const [createState, createAction, createPending] = useActionState(createAssetAccount, INITIAL_STATE)
@@ -56,6 +97,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   const [catCreateState, catCreateAction, catCreatePending] = useActionState(createAssetCategory, INITIAL_STATE)
   const [catUpdateState, catUpdateAction, catUpdatePending] = useActionState(updateAssetCategory, INITIAL_STATE)
   const [catDeleteState, catDeleteAction, catDeletePending] = useActionState(deleteAssetCategory, INITIAL_STATE)
+
+  const getTodayString = () => new Date().toISOString().split('T')[0]
 
   // Reset forms and close modal on success
   useEffect(() => {
@@ -73,14 +116,24 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
   function openCreate() {
     setSelectedAccount(null)
     setPreviewQty('')
+    setPreviewPurchasePrice('')
     setPreviewPrice('')
+    setPreviewTicker('')
+    setSelectedCategoryId(categories[0]?.id || '')
+    setSelectedCurrency('VND')
+    setPurchaseDate(getTodayString())
     setModalMode('create')
   }
 
   function openEdit(account: AssetAccount) {
     setSelectedAccount(account)
     setPreviewQty(String(account.quantity))
+    setPreviewPurchasePrice(String(account.purchase_unit_price ?? account.unit_price))
     setPreviewPrice(String(account.unit_price))
+    setPreviewTicker(account.ticker || '')
+    setSelectedCategoryId(account.category_id)
+    setSelectedCurrency(account.currency)
+    setPurchaseDate(account.purchase_date ? account.purchase_date.split('T')[0] : getTodayString())
     setModalMode('edit')
   }
 
@@ -98,7 +151,12 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setModalMode(null)
     setSelectedAccount(null)
     setPreviewQty('')
+    setPreviewPurchasePrice('')
     setPreviewPrice('')
+    setPreviewTicker('')
+    setSelectedCategoryId('')
+    setSelectedCurrency('VND')
+    setPurchaseDate('')
     formRef.current?.reset()
   }
 
@@ -119,9 +177,16 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
     setCategoryIcon(cat.icon)
   }
 
+  const activeCategory = categories.find((c) => c.id === selectedCategoryId) || categories[0]
+  const isCashCategory = activeCategory ? /tiền mặt|ngân hàng|cash|bank|ví/i.test(activeCategory.name) : false
+
   const liveTotal =
-    parseFloat(previewQty) > 0 && parseFloat(previewPrice) >= 0
-      ? parseFloat(previewQty) * parseFloat(previewPrice)
+    parseFloat(previewQty) > 0
+      ? (isCashCategory
+          ? parseFloat(previewQty)
+          : parseFloat(previewPurchasePrice) >= 0
+            ? parseFloat(previewQty) * parseFloat(previewPurchasePrice)
+            : null)
       : null
 
   const isPending = createPending || updatePending || deletePending
@@ -134,18 +199,41 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
 
   return (
     <div className="assets-page">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-xl border backdrop-blur-md shadow-lg transition-all duration-300 transform translate-y-0 opacity-100 ${
+          toastType === 'success' 
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+            : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+        }`}>
+          <div className="flex items-center gap-2">
+            {toastType === 'success' ? <Check size={16} /> : <X size={16} />}
+            <span className="text-sm font-semibold">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* ── Page header ── */}
       <div className="assets-page__header">
         <div className="assets-page__title-wrap">
           <FolderKanban className="assets-page__title-icon" size={28} />
-          <h1 className="assets-page__title">Tài sản của tôi</h1>
+          <h1 className="assets-page__title">{t('navAssets')}</h1>
         </div>
         <div className="flex gap-2">
-          <button className="btn btn--ghost" onClick={openCategories} id="manage-cats-btn">
+          <button 
+            className="btn btn--ghost flex items-center gap-1.5 cursor-pointer" 
+            onClick={handleSyncPrices}
+            disabled={isSyncing || accounts.length === 0}
+            id="sync-prices-btn"
+          >
+            <RotateCw size={15} className={isSyncing ? 'animate-spin' : ''} />
+            {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ giá'}
+          </button>
+          <button className="btn btn--ghost cursor-pointer" onClick={openCategories} id="manage-cats-btn">
             Quản lý danh mục
           </button>
           <button 
-            className="btn btn--primary" 
+            className="btn btn--primary cursor-pointer" 
             onClick={openCreate} 
             disabled={categories.length === 0}
             id="add-asset-btn"
@@ -181,15 +269,202 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
           </button>
         </div>
       ) : (
-        <div className="assets-grid">
-          {accounts.map((account) => (
-            <AssetCard
-              key={account.id}
-              account={account}
-              onEdit={openEdit}
-              onDelete={openDelete}
-            />
-          ))}
+        <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl shadow-card-shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-glass-border dark:bg-slate-900/10 bg-slate-50/20 text-xs uppercase tracking-wider text-slate-400 font-bold">
+                  <th className="p-4 pl-6">Tài sản</th>
+                  <th className="p-4">Danh mục</th>
+                  <th className="p-4 hidden sm:table-cell">Ngày sở hữu</th>
+                  <th className="p-4 text-right hidden md:table-cell">Số lượng</th>
+                  <th className="p-4 text-right hidden lg:table-cell">Giá mua</th>
+                  <th className="p-4 text-right hidden lg:table-cell">Giá hiện tại</th>
+                  <th className="p-4 text-right hidden sm:table-cell">Lời / Lỗ</th>
+                  <th className="p-4 text-right pr-6">Tổng giá trị</th>
+                  <th className="p-4 text-right pr-6">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accounts.map((account) => {
+                  const category = account.category
+                  const categoryColor = category?.color || '#94a3b8'
+                  const categoryName = category?.name || 'Chưa phân loại'
+                  const isCash = categoryName ? /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName) : false
+                  const IconComp = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[category?.icon || 'Wallet'] || Icons.Wallet
+
+                  const purchasePrice = account.purchase_unit_price || account.unit_price
+                  const diff = account.unit_price - purchasePrice
+                  const profitOrLoss = diff * account.quantity
+                  const percent = purchasePrice > 0 ? (diff / purchasePrice) * 100 : 0
+
+                  return (
+                    <tr
+                      key={account.id}
+                      className="border-b border-glass-border/60 hover:bg-slate-50/30 dark:hover:bg-slate-900/10 transition-colors"
+                    >
+                      {/* Name & Icon */}
+                      <td className="p-4 pl-6">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: `${categoryColor}15` }}
+                          >
+                            <IconComp size={16} style={{ color: categoryColor }} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                              {account.name} {account.ticker ? `(${account.ticker})` : ''}
+                            </span>
+                            {account.description && (
+                              <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[150px]">
+                                {account.description}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category Badge */}
+                      <td className="p-4">
+                        <span
+                          className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block"
+                          style={{ color: categoryColor, background: `${categoryColor}10` }}
+                        >
+                          {categoryName}
+                        </span>
+                      </td>
+
+                      {/* Purchase Date */}
+                      <td className="p-4 text-xs text-slate-500 dark:text-slate-400 hidden sm:table-cell">
+                        {account.purchase_date ? new Date(account.purchase_date).toLocaleDateString('vi-VN') : 'N/A'}
+                      </td>
+
+                      {/* Quantity */}
+                      <td className="p-4 text-xs text-right text-slate-800 dark:text-slate-200 hidden md:table-cell">
+                        {isCash ? (
+                          <span>-</span>
+                        ) : (
+                          <span>
+                            {account.quantity.toLocaleString('vi-VN', { maximumFractionDigits: 8 })}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Purchase Price */}
+                      <td className="p-4 text-xs text-right text-slate-800 dark:text-slate-200 hidden lg:table-cell">
+                        {isCash ? (
+                          <span>-</span>
+                        ) : (
+                          <span>
+                            {account.currency === 'USD'
+                              ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(purchasePrice)
+                              : VND.format(purchasePrice)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Current Price */}
+                      <td className="p-4 text-xs text-right text-slate-800 dark:text-slate-200 hidden lg:table-cell">
+                        {isCash ? (
+                          <span>-</span>
+                        ) : (
+                          <span>
+                            {account.currency === 'USD'
+                              ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.unit_price)
+                              : VND.format(account.unit_price)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Profit / Loss */}
+                      <td className="p-4 text-xs text-right hidden sm:table-cell">
+                        {isCash ? (
+                          <span className="text-slate-400 dark:text-slate-500">-</span>
+                        ) : (
+                          <div className="flex flex-col items-end justify-center">
+                            {profitOrLoss > 0 ? (
+                              <>
+                                <span className="font-semibold text-emerald-500">
+                                  +{account.currency === 'USD'
+                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(profitOrLoss)
+                                    : VND.format(profitOrLoss)}
+                                  {` (+${percent.toFixed(2)}%)`}
+                                </span>
+                                {account.currency === 'USD' && (
+                                  <span className="text-[10px] text-emerald-500/80">
+                                    ≈ +{VND.format(profitOrLoss * 25000)}
+                                  </span>
+                                )}
+                              </>
+                            ) : profitOrLoss < 0 ? (
+                              <>
+                                <span className="font-semibold text-rose-500">
+                                  {account.currency === 'USD'
+                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(profitOrLoss)
+                                    : VND.format(profitOrLoss)}
+                                  {` (${percent.toFixed(2)}%)`}
+                                </span>
+                                {account.currency === 'USD' && (
+                                  <span className="text-[10px] text-rose-500/80">
+                                    ≈ {VND.format(profitOrLoss * 25000)}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">
+                                {account.currency === 'USD' ? '$0.00' : '0 ₫'} (0.00%)
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Total Value */}
+                      <td className="p-4 text-right pr-6">
+                        {account.currency === 'USD' ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(account.quantity * account.unit_price)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                              ≈ {VND.format(account.total_value)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                            {VND.format(account.total_value)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action buttons */}
+                      <td className="p-4 text-right pr-6">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(account)}
+                            className="p-2 text-slate-400 hover:text-violet-500 dark:hover:text-violet-400 hover:bg-glass-bg border border-transparent hover:border-glass-border rounded-lg transition-colors cursor-pointer"
+                            title="Sửa"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openDelete(account)}
+                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-glass-bg border border-transparent hover:border-glass-border rounded-lg transition-colors cursor-pointer"
+                            title="Xóa"
+                          >
+                            <Trash size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -219,7 +494,7 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
               {/* Name */}
               <div className="form-field">
                 <label className="form-label" htmlFor="asset-name">
-                  Tên tài sản <span className="required">*</span>
+                  Tên tài sản <span className="optional">(tùy chọn, mặc định lấy tên danh mục)</span>
                 </label>
                 <input
                   id="asset-name"
@@ -228,7 +503,6 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                   className="form-input"
                   defaultValue={selectedAccount?.name ?? ''}
                   placeholder="VD: SJC Gold, Bitcoin, FPT Stock..."
-                  required
                   maxLength={100}
                 />
               </div>
@@ -242,7 +516,8 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                   id="asset-category" 
                   name="category_id" 
                   className="form-select" 
-                  defaultValue={selectedAccount?.category_id ?? categories[0]?.id}
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
                   required
                 >
                   {categories.map((cat) => (
@@ -253,49 +528,134 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
                 </select>
               </div>
 
-              {/* Quantity */}
+              {/* Currency Selector */}
               <div className="form-field">
-                <label className="form-label" htmlFor="asset-quantity">
-                  Số lượng <span className="required">*</span>
+                <label className="form-label" htmlFor="asset-currency">
+                  Tiền tệ <span className="required">*</span>
                 </label>
-                <input
-                  id="asset-quantity"
-                  name="quantity"
-                  type="number"
-                  className="form-input"
-                  value={previewQty}
-                  onChange={(e) => setPreviewQty(e.target.value)}
-                  step="any"
-                  min="0"
-                  placeholder="0"
+                <select
+                  id="asset-currency"
+                  name="currency"
+                  className="form-select"
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
                   required
+                >
+                  <option value="VND">VND (đ)</option>
+                  <option value="USD">USD ($)</option>
+                </select>
+              </div>
+
+              {/* Purchase Date */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="asset-purchase-date">
+                  Ngày mua / Ngày sở hữu <span className="required">*</span>
+                </label>
+                <DatePicker
+                  id="asset-purchase-date"
+                  name="purchase_date"
+                  selectedDate={purchaseDate}
+                  onChange={setPurchaseDate}
                 />
               </div>
 
-              {/* Unit price */}
-              <div className="form-field">
-                <label className="form-label" htmlFor="asset-unit-price">
-                  Đơn giá (VND) <span className="required">*</span>
-                </label>
-                <input
-                  id="asset-unit-price"
-                  name="unit_price"
-                  type="number"
-                  className="form-input"
-                  value={previewPrice}
-                  onChange={(e) => setPreviewPrice(e.target.value)}
-                  step="any"
-                  min="0"
-                  placeholder="0"
-                  required
-                />
-              </div>
+              {/* Dynamic inputs: Cash Category vs Investment Category */}
+              {isCashCategory ? (
+                <>
+                  <input type="hidden" name="unit_price" value="1" />
+                  <input type="hidden" name="purchase_unit_price" value="1" />
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-balance">
+                      Số dư / Giá trị <span className="required">*</span>
+                    </label>
+                    <input
+                      id="asset-balance"
+                      name="quantity"
+                      type="number"
+                      className="form-input"
+                      value={previewQty}
+                      onChange={(e) => setPreviewQty(e.target.value)}
+                      step="any"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Quantity */}
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-quantity">
+                      Số lượng <span className="required">*</span>
+                    </label>
+                    <input
+                      id="asset-quantity"
+                      name="quantity"
+                      type="number"
+                      className="form-input"
+                      value={previewQty}
+                      onChange={(e) => setPreviewQty(e.target.value)}
+                      step="any"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+
+                  {/* Purchase Unit price */}
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-purchase-unit-price">
+                      Đơn giá mua ({selectedCurrency}) <span className="required">*</span>
+                    </label>
+                    <input
+                      id="asset-purchase-unit-price"
+                      name="purchase_unit_price"
+                      type="number"
+                      className="form-input"
+                      value={previewPurchasePrice}
+                      onChange={(e) => setPreviewPurchasePrice(e.target.value)}
+                      step="any"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+
+                  {/* Ticker Symbol */}
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="asset-ticker">
+                      Mã tài sản / Ticker <span className="optional">(tùy chọn để tự động đồng bộ giá, ví dụ: BTC, HPG, SJC)</span>
+                    </label>
+                    <input
+                      id="asset-ticker"
+                      name="ticker"
+                      type="text"
+                      className="form-input"
+                      value={previewTicker}
+                      onChange={(e) => setPreviewTicker(e.target.value)}
+                      placeholder="BTC, HPG, SJC..."
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Live total preview */}
               {liveTotal !== null && (
                 <div className="form-preview">
-                  <span className="form-preview__label">Tổng giá trị ước tính</span>
-                  <span className="form-preview__value">{VND.format(liveTotal)}</span>
+                  <span className="form-preview__label">Tổng giá trị ước tính (VND)</span>
+                  <span className="form-preview__value font-bold text-slate-800 dark:text-slate-100">
+                    {selectedCurrency === 'USD' ? (
+                      <>
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(liveTotal)}
+                        <span className="text-xs text-slate-400 block mt-0.5 font-normal">
+                          ≈ {VND.format(liveTotal * 25000)} (Tỷ giá cố định 25.000đ)
+                        </span>
+                      </>
+                    ) : (
+                      VND.format(liveTotal)
+                    )}
+                  </span>
                 </div>
               )}
 
@@ -332,37 +692,26 @@ export default function AssetClient({ accounts, categories }: AssetClientProps) 
         </div>
       )}
 
-      {/* ── Modal: Delete Account Confirmation ── */}
-      {modalMode === 'delete' && selectedAccount && (
-        <div className="modal-overlay" onClick={closeModal} role="dialog" aria-modal="true">
-          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal__header">
-              <h2 className="modal__title">Xóa tài sản</h2>
-              <button className="modal__close" onClick={closeModal} aria-label="Đóng">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal__body">
-              <p className="modal__confirm-text">
-                Bạn có chắc muốn xóa tài sản{' '}
-                <strong>&ldquo;{selectedAccount.name}&rdquo;</strong>? Hành động này không thể hoàn tác.
-              </p>
-            </div>
-            <form action={deleteAction}>
-              <input type="hidden" name="id" value={selectedAccount.id} />
-              {deleteState.error && <p className="form-error">{deleteState.error}</p>}
-              <div className="modal__footer">
-                <button type="button" className="btn btn--ghost" onClick={closeModal}>
-                  Hủy
-                </button>
-                <button type="submit" className="btn btn--danger" disabled={deletePending}>
-                  {deletePending ? 'Đang xóa...' : 'Xóa tài sản'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={modalMode === 'delete' && selectedAccount !== null}
+        title="Xóa tài sản"
+        message={
+          selectedAccount
+            ? `Bạn có chắc chắn muốn xóa tài sản "${selectedAccount.name}"? Hành động này không thể hoàn tác.`
+            : ''
+        }
+        confirmText="Xóa tài sản"
+        cancelText="Hủy"
+        isPending={deletePending}
+        isDanger={true}
+        onConfirm={async () => {
+          if (!selectedAccount) return
+          const formData = new FormData()
+          formData.append('id', selectedAccount.id)
+          await deleteAction(formData)
+        }}
+        onClose={closeModal}
+      />
 
       {/* ── Modal: Manage Categories ── */}
       {modalMode === 'categories' && (

@@ -102,7 +102,8 @@ const translations = {
     manageCategories: 'Quản lý danh mục',
     signOut: 'Đăng xuất',
     navOverview: 'Tổng quan',
-    navAssets: 'Tài sản',
+    navAssets: 'Lịch sử giao dịch',
+    navCategories: 'Danh mục của tôi',
   },
   en: {
     // Auth Shared
@@ -146,7 +147,8 @@ const translations = {
     manageCategories: 'Manage Categories',
     signOut: 'Sign Out',
     navOverview: 'Overview',
-    navAssets: 'Assets',
+    navAssets: 'Transaction History',
+    navCategories: 'My Categories',
   },
 }
 

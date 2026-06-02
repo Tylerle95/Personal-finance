@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.asset_accounts (
     quantity NUMERIC NOT NULL DEFAULT 0,
     unit_price NUMERIC NOT NULL DEFAULT 0,
     currency VARCHAR(10) NOT NULL DEFAULT 'VND',
+    purchase_date DATE NOT NULL DEFAULT CURRENT_DATE,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

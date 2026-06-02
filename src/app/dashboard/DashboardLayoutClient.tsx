@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
-import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe } from 'lucide-react'
+import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe, FolderKanban } from 'lucide-react'
 import RippleButton from '@/components/ui/RippleButton'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 
 interface DashboardLayoutClientProps {
   user: {
@@ -24,6 +25,8 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
   const pathname = usePathname()
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true)
   const [mounted, setMounted] = useState<boolean>(false)
+  const logoutFormRef = useRef<HTMLFormElement>(null)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   // Sync state with localStorage on mount
   useEffect(() => {
@@ -103,9 +106,10 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             </RippleButton>
 
             {/* Logout Form */}
-            <form action={signOut}>
+            <form ref={logoutFormRef} action={signOut}>
               <RippleButton
-                type="submit"
+                type="button"
+                onClick={() => setShowLogoutModal(true)}
                 className="flex items-center gap-2 text-xs font-semibold dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 dark:bg-slate-900/60 bg-slate-100 hover:bg-red-500/15 dark:hover:bg-red-500/15 border dark:border-slate-800 border-slate-200 px-3.5 py-2 rounded-lg transition-all duration-200 active:scale-[0.96] cursor-pointer"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -131,37 +135,65 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
               href="/dashboard"
               className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
                 mounted && !isSidebarExpanded
-                  ? 'flex-col items-center justify-center p-2.5 gap-1'
+                  ? 'items-center justify-center p-3'
                   : 'items-center gap-3 px-4 py-3'
               } ${
                 pathname === '/dashboard'
                   ? 'bg-violet-500/10 text-primary font-bold border border-violet-500/20'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white border border-transparent'
               }`}
+              title={mounted && !isSidebarExpanded ? t('navOverview') : undefined}
             >
-              <LayoutDashboard className={mounted && !isSidebarExpanded ? 'h-5 w-5' : 'h-5 w-5'} />
-              <span className={mounted && !isSidebarExpanded ? 'text-[10px] tracking-wide mt-0.5' : 'text-sm font-semibold'}>
-                {t('navOverview')}
-              </span>
+              <LayoutDashboard className="h-5 w-5 shrink-0" />
+              {(!mounted || isSidebarExpanded) && (
+                <span className="text-sm font-semibold truncate">
+                  {t('navOverview')}
+                </span>
+              )}
             </Link>
 
-            {/* Nav: Assets (Tài sản) */}
+            {/* Nav: Assets (Lịch sử giao dịch / Tài sản) */}
             <Link
               href="/dashboard/assets"
               className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
                 mounted && !isSidebarExpanded
-                  ? 'flex-col items-center justify-center p-2.5 gap-1'
+                  ? 'items-center justify-center p-3'
                   : 'items-center gap-3 px-4 py-3'
               } ${
                 pathname.startsWith('/dashboard/assets')
                   ? 'bg-violet-500/10 text-primary font-bold border border-violet-500/20'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white border border-transparent'
               }`}
+              title={mounted && !isSidebarExpanded ? t('navAssets') : undefined}
             >
-              <Wallet className={mounted && !isSidebarExpanded ? 'h-5 w-5' : 'h-5 w-5'} />
-              <span className={mounted && !isSidebarExpanded ? 'text-[10px] tracking-wide mt-0.5' : 'text-sm font-semibold'}>
-                {t('navAssets')}
-              </span>
+              <Wallet className="h-5 w-5 shrink-0" />
+              {(!mounted || isSidebarExpanded) && (
+                <span className="text-sm font-semibold truncate">
+                  {t('navAssets')}
+                </span>
+              )}
+            </Link>
+
+            {/* Nav: Categories (Danh mục của tôi) */}
+            <Link
+              href="/dashboard/categories"
+              className={`flex rounded-xl transition-all duration-200 active:scale-[0.98] ${
+                mounted && !isSidebarExpanded
+                  ? 'items-center justify-center p-3'
+                  : 'items-center gap-3 px-4 py-3'
+              } ${
+                pathname.startsWith('/dashboard/categories')
+                  ? 'bg-violet-500/10 text-primary font-bold border border-violet-500/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white border border-transparent'
+              }`}
+              title={mounted && !isSidebarExpanded ? t('navCategories') : undefined}
+            >
+              <FolderKanban className="h-5 w-5 shrink-0" />
+              {(!mounted || isSidebarExpanded) && (
+                <span className="text-sm font-semibold truncate">
+                  {t('navCategories')}
+                </span>
+              )}
             </Link>
           </nav>
         </aside>
@@ -205,8 +237,33 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
             <Wallet className="h-5 w-5" />
             <span className="text-[10px] tracking-wide">{t('navAssets')}</span>
           </Link>
+          <Link
+            href="/dashboard/categories"
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-[0.97] cursor-pointer ${
+              pathname.startsWith('/dashboard/categories')
+                ? 'text-primary font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-foreground'
+            }`}
+          >
+            <FolderKanban className="h-5 w-5" />
+            <span className="text-[10px] tracking-wide">{t('navCategories')}</span>
+          </Link>
         </div>
       </nav>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        title="Đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        onConfirm={() => {
+          logoutFormRef.current?.requestSubmit()
+        }}
+        onClose={() => setShowLogoutModal(false)}
+        isDanger={true}
+      />
     </div>
   )
 }
