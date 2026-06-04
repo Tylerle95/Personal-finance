@@ -287,7 +287,7 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
           <button 
             className="btn btn--ghost flex items-center gap-1.5 cursor-pointer"
             onClick={openIncome}
-            disabled={walletAccounts.length === 0 || incomeCategories.length === 0}
+            disabled={accounts.length === 0 || incomeCategories.length === 0}
             id="add-income-btn"
           >
             <Plus size={15} />

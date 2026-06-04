@@ -37,7 +37,7 @@ export async function createAssetCategory(
   if (!icon || !PREDEFINED_ICONS.includes(icon)) {
     return { error: 'Biểu tượng không hợp lệ.', success: false, message: null }
   }
-  if (type !== 'asset' && type !== 'spending') {
+  if (type !== 'asset' && type !== 'spending' && type !== 'income') {
     return { error: 'Loại danh mục không hợp lệ.', success: false, message: null }
   }
 

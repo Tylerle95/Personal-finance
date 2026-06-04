@@ -361,6 +361,19 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
                   }`} />
                   Danh mục chi tiêu
                 </Link>
+                <Link
+                  href="/dashboard/categories?type=income"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    pathname.startsWith('/dashboard/categories') && currentTabType === 'income'
+                      ? 'text-primary font-bold bg-violet-500/5 border border-violet-500/10'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border border-transparent'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    pathname.startsWith('/dashboard/categories') && currentTabType === 'income' ? 'bg-violet-500' : 'bg-slate-400'
+                  }`} />
+                  Danh mục thu nhập
+                </Link>
               </div>
             )}
           </nav>
