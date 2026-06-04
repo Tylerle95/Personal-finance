@@ -45,6 +45,84 @@ async function adjustAccountBalance(
   }
 }
 
+// Helper to revert income/expense transaction balance for wallet or asset
+async function revertTransactionBalance(supabase: any, tx: any, userId: string) {
+  const { data: account, error: accountErr } = await supabase
+    .from('asset_accounts')
+    .select('quantity, category:asset_categories(name)')
+    .eq('id', tx.account_id)
+    .eq('user_id', userId)
+    .single()
+
+  if (accountErr || !account) return
+
+  const categoryName = (account.category as any)?.name || ''
+  const isWallet = /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName)
+
+  if (tx.type === 'expense') {
+    if (isWallet) {
+      await adjustAccountBalance(supabase, tx.account_id, userId, Number(tx.amount), tx.currency)
+    } else {
+      const newQty = Number(account.quantity) + Number(tx.quantity)
+      await supabase
+        .from('asset_accounts')
+        .update({ quantity: newQty })
+        .eq('id', tx.account_id)
+        .eq('user_id', userId)
+    }
+  } else if (tx.type === 'income') {
+    if (isWallet) {
+      await adjustAccountBalance(supabase, tx.account_id, userId, -Number(tx.amount), tx.currency)
+    } else {
+      const newQty = Number(account.quantity) - Number(tx.quantity)
+      await supabase
+        .from('asset_accounts')
+        .update({ quantity: newQty >= 0 ? newQty : 0 })
+        .eq('id', tx.account_id)
+        .eq('user_id', userId)
+    }
+  }
+}
+
+// Helper to re-apply old balance adjustments upon update error
+async function applyOldBalanceAdjustment(supabase: any, tx: any, userId: string) {
+  const { data: account, error: accountErr } = await supabase
+    .from('asset_accounts')
+    .select('quantity, category:asset_categories(name)')
+    .eq('id', tx.account_id)
+    .eq('user_id', userId)
+    .single()
+
+  if (accountErr || !account) return
+
+  const categoryName = (account.category as any)?.name || ''
+  const isWallet = /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName)
+
+  if (tx.type === 'expense') {
+    if (isWallet) {
+      await adjustAccountBalance(supabase, tx.account_id, userId, -Number(tx.amount), tx.currency)
+    } else {
+      const newQty = Number(account.quantity) - Number(tx.quantity)
+      await supabase
+        .from('asset_accounts')
+        .update({ quantity: newQty >= 0 ? newQty : 0 })
+        .eq('id', tx.account_id)
+        .eq('user_id', userId)
+    }
+  } else if (tx.type === 'income') {
+    if (isWallet) {
+      await adjustAccountBalance(supabase, tx.account_id, userId, Number(tx.amount), tx.currency)
+    } else {
+      const newQty = Number(account.quantity) + Number(tx.quantity)
+      await supabase
+        .from('asset_accounts')
+        .update({ quantity: newQty })
+        .eq('id', tx.account_id)
+        .eq('user_id', userId)
+    }
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Transaction
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,7 +148,7 @@ export async function createTransaction(
 
   // Validations
   if (!accountId) {
-    return { error: 'Vui lòng chọn ví/nguồn tiền thanh toán.', success: false, message: null }
+    return { error: 'Vui lòng chọn ví/nguồn tiền thanh toán hoặc tài sản.', success: false, message: null }
   }
   if (type !== 'income' && type !== 'expense') {
     return { error: 'Loại giao dịch không hợp lệ.', success: false, message: null }
@@ -84,14 +162,29 @@ export async function createTransaction(
   }
 
   try {
-    // 1. Fetch wallet currency
-    const { data: wallet, error: walletErr } = await supabase
+    // 1. Fetch target account details
+    const { data: account, error: accountErr } = await supabase
       .from('asset_accounts')
-      .select('currency')
+      .select('currency, quantity, unit_price, category:asset_categories(name)')
       .eq('id', accountId)
       .single()
-    if (walletErr || !wallet) {
-      return { error: 'Ví/Nguồn tiền thanh toán không tồn tại.', success: false, message: null }
+    if (accountErr || !account) {
+      return { error: 'Tài khoản hoặc tài sản đích không tồn tại.', success: false, message: null }
+    }
+
+    const categoryName = (account.category as any)?.name || ''
+    const isWallet = /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName)
+    const unitPrice = Number(account.unit_price)
+
+    let txQuantity = 1
+    let txPricePerUnit = amount
+
+    if (!isWallet) {
+      if (unitPrice <= 0) {
+        return { error: 'Đơn giá tài sản hiện tại phải lớn hơn 0 để quy đổi số lượng.', success: false, message: null }
+      }
+      txQuantity = amount / unitPrice
+      txPricePerUnit = unitPrice
     }
 
     // 2. Insert transaction
@@ -104,9 +197,9 @@ export async function createTransaction(
         type,
         category_id: categoryId,
         amount,
-        quantity: 1,
-        price_per_unit: amount,
-        currency: wallet.currency,
+        quantity: txQuantity,
+        price_per_unit: txPricePerUnit,
+        currency: account.currency,
         transaction_date: dateStr,
         description,
       })
@@ -117,10 +210,23 @@ export async function createTransaction(
       return { error: `Không thể tạo giao dịch: ${txErr.message}`, success: false, message: null }
     }
 
-    // 3. Adjust wallet balance
-    // Expense: deduct (-amount), Income: add (+amount)
-    const adjustment = type === 'expense' ? -amount : amount
-    await adjustAccountBalance(supabase, accountId, user.id, adjustment, wallet.currency)
+    // 3. Adjust account balance
+    if (isWallet) {
+      const adjustment = type === 'expense' ? -amount : amount
+      await adjustAccountBalance(supabase, accountId, user.id, adjustment, account.currency)
+    } else {
+      const adjustment = type === 'expense' ? -amount : amount
+      const quantityChange = adjustment / unitPrice
+      const newQty = Number(account.quantity) + quantityChange
+      const { error: updateError } = await supabase
+        .from('asset_accounts')
+        .update({ quantity: newQty >= 0 ? newQty : 0 })
+        .eq('id', accountId)
+        .eq('user_id', user.id)
+      if (updateError) {
+        throw new Error(`Lỗi cập nhật số lượng tài sản: ${updateError.message}`)
+      }
+    }
 
     revalidatePath('/dashboard/spending')
     revalidatePath('/dashboard/transactions')
@@ -184,12 +290,8 @@ export async function deleteTransaction(
     }
 
     // 3. Revert balance updates based on transaction type
-    if (tx.type === 'expense') {
-      // Revert expense: add back the cost
-      await adjustAccountBalance(supabase, tx.account_id, user.id, Number(tx.amount), tx.currency)
-    } else if (tx.type === 'income') {
-      // Revert income: subtract the money
-      await adjustAccountBalance(supabase, tx.account_id, user.id, -Number(tx.amount), tx.currency)
+    if (tx.type === 'expense' || tx.type === 'income') {
+      await revertTransactionBalance(supabase, tx, user.id)
     } else if (tx.type === 'buy') {
       // Revert buy: delete/reduce asset quantity, add back to funding wallet (source)
       // Deduct from target asset account
@@ -298,24 +400,55 @@ export async function updateTransaction(
       return { error: 'Giao dịch không tồn tại.', success: false, message: null }
     }
 
-    // 2. Fetch new wallet currency
-    const { data: wallet, error: walletErr } = await supabase
+    // 2. Fetch new account details
+    const { data: account, error: accountErr } = await supabase
       .from('asset_accounts')
-      .select('currency')
+      .select('currency, quantity, unit_price, category:asset_categories(name)')
       .eq('id', accountId)
       .single()
 
-    if (walletErr || !wallet) {
-      return { error: 'Ví/Nguồn tiền thanh toán không hợp lệ.', success: false, message: null }
+    if (accountErr || !account) {
+      return { error: 'Tài khoản hoặc tài sản thanh toán không hợp lệ.', success: false, message: null }
+    }
+
+    const categoryName = (account.category as any)?.name || ''
+    const isWallet = /tiền mặt|ngân hàng|cash|bank|ví/i.test(categoryName)
+    const unitPrice = Number(account.unit_price)
+
+    let txQuantity = 1
+    let txPricePerUnit = amount
+
+    if (!isWallet) {
+      if (unitPrice <= 0) {
+        return { error: 'Đơn giá tài sản hiện tại phải lớn hơn 0 để quy đổi số lượng.', success: false, message: null }
+      }
+      txQuantity = amount / unitPrice
+      txPricePerUnit = unitPrice
     }
 
     // 3. Revert old balance adjustment
-    const oldAdjustment = oldTx.type === 'expense' ? Number(oldTx.amount) : -Number(oldTx.amount)
-    await adjustAccountBalance(supabase, oldTx.account_id, user.id, oldAdjustment, oldTx.currency)
+    await revertTransactionBalance(supabase, oldTx, user.id)
 
     // 4. Apply new balance adjustment
-    const newAdjustment = type === 'expense' ? -amount : amount
-    await adjustAccountBalance(supabase, accountId, user.id, newAdjustment, wallet.currency)
+    if (isWallet) {
+      const adjustment = type === 'expense' ? -amount : amount
+      await adjustAccountBalance(supabase, accountId, user.id, adjustment, account.currency)
+    } else {
+      const adjustment = type === 'expense' ? -amount : amount
+      const quantityChange = adjustment / unitPrice
+      const { data: updatedAccount } = await supabase
+        .from('asset_accounts')
+        .select('quantity')
+        .eq('id', accountId)
+        .single()
+      const currentQty = updatedAccount ? Number(updatedAccount.quantity) : Number(account.quantity)
+      const newQty = currentQty + quantityChange
+      await supabase
+        .from('asset_accounts')
+        .update({ quantity: newQty >= 0 ? newQty : 0 })
+        .eq('id', accountId)
+        .eq('user_id', user.id)
+    }
 
     // 5. Update transaction details
     const { error: updateErr } = await supabase
@@ -325,8 +458,9 @@ export async function updateTransaction(
         category_id: categoryId,
         type,
         amount,
-        price_per_unit: amount,
-        currency: wallet.currency,
+        quantity: txQuantity,
+        price_per_unit: txPricePerUnit,
+        currency: account.currency,
         transaction_date: dateStr,
         description,
         updated_at: new Date().toISOString(),
@@ -335,9 +469,28 @@ export async function updateTransaction(
       .eq('user_id', user.id)
 
     if (updateErr) {
-      // Attempt to re-apply old balance on error
-      await adjustAccountBalance(supabase, accountId, user.id, -newAdjustment, wallet.currency)
-      await adjustAccountBalance(supabase, oldTx.account_id, user.id, -oldAdjustment, oldTx.currency)
+      // Re-apply new balance adjustment reversal on error
+      if (isWallet) {
+        const adjustment = type === 'expense' ? amount : -amount
+        await adjustAccountBalance(supabase, accountId, user.id, adjustment, account.currency)
+      } else {
+        const adjustment = type === 'expense' ? amount : -amount
+        const quantityChange = adjustment / unitPrice
+        const { data: updatedAccount } = await supabase
+          .from('asset_accounts')
+          .select('quantity')
+          .eq('id', accountId)
+          .single()
+        const currentQty = updatedAccount ? Number(updatedAccount.quantity) : Number(account.quantity)
+        const newQty = currentQty + quantityChange
+        await supabase
+          .from('asset_accounts')
+          .update({ quantity: newQty >= 0 ? newQty : 0 })
+          .eq('id', accountId)
+          .eq('user_id', user.id)
+      }
+      // Re-apply old balance adjustment
+      await applyOldBalanceAdjustment(supabase, oldTx, user.id)
       return { error: `Lỗi cập nhật giao dịch: ${updateErr.message}`, success: false, message: null }
     }
 

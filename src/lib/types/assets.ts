@@ -63,6 +63,13 @@ export interface AllocationItem {
   percentage: number
   color: string
   icon: string
+  assets?: {
+    name: string
+    quantity: number
+    ticker: string | null
+    currency: string
+    unit_price: number
+  }[]
 }
 
 export interface NetWorthSummary {

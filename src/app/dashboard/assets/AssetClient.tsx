@@ -45,6 +45,11 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
     const catName = acc.category?.name || ''
     return /tiền mặt|ngân hàng|cash|bank|ví/i.test(catName)
   })
+
+  const otherAssetAccounts = accounts.filter((acc) => {
+    const catName = acc.category?.name || ''
+    return !/tiền mặt|ngân hàng|cash|bank|ví/i.test(catName)
+  })
   
   // Category editor states
   const [isEditingCategory, setIsEditingCategory] = useState(false)
@@ -71,6 +76,11 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
   const [isSyncing, setIsSyncing] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastType, setToastType] = useState<'success' | 'error'>('success')
+
+  // Filter & Sort States
+  const [filterCategoryId, setFilterCategoryId] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<string>('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const formRef = useRef<HTMLFormElement>(null)
   const categoryFormRef = useRef<HTMLFormElement>(null)
@@ -319,25 +329,107 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
             Thêm tài sản đầu tiên
           </button>
         </div>
-      ) : (
-        <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl shadow-card-shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-glass-border dark:bg-slate-900/10 bg-slate-50/20 text-xs uppercase tracking-wider text-slate-400 font-bold">
-                  <th className="p-4 pl-6">Tài sản</th>
-                  <th className="p-4">Danh mục</th>
-                  <th className="p-4 hidden sm:table-cell">Ngày sở hữu</th>
-                  <th className="p-4 text-right hidden md:table-cell">Số lượng</th>
-                  <th className="p-4 text-right hidden lg:table-cell">Giá mua</th>
-                  <th className="p-4 text-right hidden lg:table-cell">Giá hiện tại</th>
-                  <th className="p-4 text-right hidden sm:table-cell">Lời / Lỗ</th>
-                  <th className="p-4 text-right pr-6">Tổng giá trị</th>
-                  <th className="p-4 text-right pr-6">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accounts.map((account) => {
+      ) : (() => {
+        const filteredAndSortedAccounts = accounts
+          .filter((acc) => {
+            if (filterCategoryId === 'all') return true
+            return acc.category_id === filterCategoryId
+          })
+          .sort((a, b) => {
+            let comparison = 0
+            if (sortBy === 'purchase_date') {
+              const dateA = a.purchase_date ? new Date(a.purchase_date).getTime() : 0
+              const dateB = b.purchase_date ? new Date(b.purchase_date).getTime() : 0
+              comparison = dateA - dateB
+            } else if (sortBy === 'total_value') {
+              comparison = a.total_value - b.total_value
+            } else if (sortBy === 'name') {
+              comparison = a.name.localeCompare(b.name)
+            } else {
+              // default: created_at
+              const dateA = new Date(a.created_at).getTime()
+              const dateB = new Date(b.created_at).getTime()
+              comparison = dateA - dateB
+            }
+            return sortOrder === 'desc' ? -comparison : comparison
+          })
+
+        return (
+          <div className="flex flex-col w-full">
+            {/* Filter and Sort Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 p-4 border border-glass-border bg-glass-bg/50 backdrop-blur-md rounded-2xl">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-bold uppercase">Lọc danh mục:</span>
+                  <select
+                    value={filterCategoryId}
+                    onChange={(e) => setFilterCategoryId(e.target.value)}
+                    className="text-xs font-semibold bg-glass-bg border border-glass-border px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-200 outline-none cursor-pointer focus:border-violet-500 transition-colors"
+                  >
+                    <option value="all">Tất cả danh mục</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-bold uppercase">Sắp xếp:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="text-xs font-semibold bg-glass-bg border border-glass-border px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-200 outline-none cursor-pointer focus:border-violet-500 transition-colors"
+                  >
+                    <option value="created_at">Ngày tạo</option>
+                    <option value="purchase_date">Ngày sở hữu</option>
+                    <option value="total_value">Tổng giá trị</option>
+                    <option value="name">Tên tài sản</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="flex items-center justify-center p-1.5 border border-glass-border bg-glass-bg hover:bg-slate-50 dark:hover:bg-slate-900/60 rounded-xl text-slate-500 dark:text-slate-400 transition-colors cursor-pointer"
+                  title={sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'}
+                >
+                  {sortOrder === 'asc' ? (
+                    <Icons.ArrowUp size={16} />
+                  ) : (
+                    <Icons.ArrowDown size={16} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl shadow-card-shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-glass-border dark:bg-slate-900/10 bg-slate-50/20 text-xs uppercase tracking-wider text-slate-400 font-bold">
+                      <th className="p-4 pl-6">Tài sản</th>
+                      <th className="p-4">Danh mục</th>
+                      <th className="p-4 hidden sm:table-cell">Ngày sở hữu</th>
+                      <th className="p-4 text-right hidden md:table-cell">Số lượng</th>
+                      <th className="p-4 text-right hidden lg:table-cell">Giá mua</th>
+                      <th className="p-4 text-right hidden lg:table-cell">Giá hiện tại</th>
+                      <th className="p-4 text-right hidden sm:table-cell">Lời / Lỗ</th>
+                      <th className="p-4 text-right pr-6">Tổng giá trị</th>
+                      <th className="p-4 text-right pr-6">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAndSortedAccounts.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="p-8 text-center text-xs text-slate-400 italic">
+                          Không tìm thấy tài sản nào phù hợp với bộ lọc hiện tại.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredAndSortedAccounts.map((account) => {
                   const category = account.category
                   const categoryColor = category?.color || '#94a3b8'
                   const categoryName = category?.name || 'Chưa phân loại'
@@ -512,12 +604,14 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
                       </td>
                     </tr>
                   )
-                })}
+                }))}
               </tbody>
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )
+  })()}
 
       {/* ── Modal: Create / Edit Account ── */}
       {(modalMode === 'create' || modalMode === 'edit') && (
@@ -781,7 +875,7 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
               {/* Target wallet selection */}
               <div className="form-field">
                 <label className="form-label" htmlFor="income-wallet">
-                  Tài khoản nhận / Ví <span className="required">*</span>
+                  Tài khoản nhận / Ví / Tài sản <span className="required">*</span>
                 </label>
                 <select
                   id="income-wallet"
@@ -791,12 +885,25 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
                   onChange={(e) => setSelectedIncomeWalletId(e.target.value)}
                   required
                 >
-                  <option value="" disabled>-- Chọn ví / tài khoản nhận --</option>
-                  {walletAccounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} ({acc.currency === 'USD' ? '$' : '₫'}{Number(acc.quantity).toLocaleString('vi-VN')} {acc.currency})
-                    </option>
-                  ))}
+                  <option value="" disabled>-- Chọn tài khoản nhận --</option>
+                  {walletAccounts.length > 0 && (
+                    <optgroup label="Ví & Tài khoản ngân hàng">
+                      {walletAccounts.map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name} ({acc.currency === 'USD' ? '$' : '₫'}{Number(acc.quantity).toLocaleString('vi-VN')} {acc.currency})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {otherAssetAccounts.length > 0 && (
+                    <optgroup label="Tài sản khác">
+                      {otherAssetAccounts.map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name} ({acc.currency === 'USD' ? '$' : '₫'}{Number(acc.quantity).toLocaleString('vi-VN')} {acc.currency})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 
