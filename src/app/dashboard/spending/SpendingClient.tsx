@@ -9,6 +9,7 @@ import { createAssetCategory, updateAssetCategory, deleteAssetCategory } from '@
 import DatePicker from '@/components/ui/DatePicker'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { useLanguage } from '@/components/providers'
+import FormattedAmountInput from '@/components/ui/FormattedAmountInput'
 
 const INITIAL_STATE: ActionResult = { error: null, success: false, message: null }
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -404,15 +405,13 @@ export default function SpendingClient({
                   Số tiền <span className="required">*</span>
                 </label>
                 <div className="relative">
-                  <input
+                  <FormattedAmountInput
                     id="tx-amount"
                     name="amount"
-                    type="number"
+                    currency={walletAccounts.find((w) => w.id === selectedWalletId)?.currency || 'VND'}
                     className="form-input pr-12"
                     value={txAmount}
-                    onChange={(e) => setTxAmount(e.target.value)}
-                    step="any"
-                    min="0.01"
+                    onChange={setTxAmount}
                     placeholder="0"
                     required
                   />

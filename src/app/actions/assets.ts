@@ -352,10 +352,10 @@ export async function updateAssetAccount(
     return { error: 'ID tài sản không hợp lệ.', success: false, message: null }
   }
 
-  // Fetch the existing account to get category details
+  // Fetch the existing account to get details
   const { data: existingAccount, error: fetchError } = await supabase
     .from('asset_accounts')
-    .select('category_id, name')
+    .select('category_id, name, quantity, unit_price, purchase_unit_price, currency')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
@@ -463,8 +463,56 @@ export async function updateAssetAccount(
     return { error: error.message, success: false, message: null }
   }
 
+  // Generate a transaction log if the quantity/balance changed
+  const oldQty = Number(existingAccount.quantity)
+  const newQty = updates.quantity !== undefined ? Number(updates.quantity) : oldQty
+  const qtyDiff = newQty - oldQty
+
+  if (qtyDiff !== 0) {
+    const activeCurrency = (updates.currency as string) || existingAccount.currency
+    const activeDate = (updates.purchase_date as string) || new Date().toISOString().split('T')[0]
+    const pricePerUnit = updates.purchase_unit_price !== undefined 
+      ? Number(updates.purchase_unit_price) 
+      : (isCashCategory ? 1 : Number(existingAccount.purchase_unit_price))
+
+    const amount = isCashCategory ? Math.abs(qtyDiff) : Math.abs(qtyDiff) * pricePerUnit
+    const transactionQty = isCashCategory ? 1 : Math.abs(qtyDiff)
+    const transactionPrice = isCashCategory ? Math.abs(qtyDiff) : pricePerUnit
+
+    let txType: 'income' | 'expense' | 'buy' | 'sell' = 'income'
+    if (isCashCategory) {
+      txType = qtyDiff > 0 ? 'income' : 'expense'
+    } else {
+      txType = qtyDiff > 0 ? 'buy' : 'sell'
+    }
+
+    const defaultDesc = qtyDiff > 0 
+      ? (isCashCategory ? `Điều chỉnh tăng số dư ${existingAccount.name}` : `Mua thêm tài sản ${existingAccount.name}`)
+      : (isCashCategory ? `Điều chỉnh giảm số dư ${existingAccount.name}` : `Bán bớt tài sản ${existingAccount.name}`)
+    const activeDesc = (updates.description as string) || defaultDesc
+
+    // Insert transaction history log
+    await supabase
+      .from('asset_transactions')
+      .insert({
+        user_id: user.id,
+        account_id: id,
+        source_account_id: null,
+        type: txType,
+        category_id: categoryId || existingAccount.category_id,
+        amount,
+        quantity: transactionQty,
+        price_per_unit: transactionPrice,
+        currency: activeCurrency,
+        transaction_date: activeDate,
+        description: activeDesc,
+      })
+  }
+
   revalidatePath('/dashboard/assets')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/transactions')
+  revalidatePath('/dashboard/spending')
   return { error: null, success: true, message: 'Tài sản đã được cập nhật thành công!' }
 }
 

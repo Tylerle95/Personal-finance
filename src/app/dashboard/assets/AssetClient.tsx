@@ -23,6 +23,7 @@ import { createTransaction } from '@/app/actions/transactions'
 import DatePicker from '@/components/ui/DatePicker'
 import ConfirmationModal from '@/components/ui/ConfirmationModal'
 import { useLanguage } from '@/components/providers'
+import FormattedAmountInput from '@/components/ui/FormattedAmountInput'
 
 const INITIAL_STATE: ActionResult = { error: null, success: false, message: null }
 const VND = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
@@ -713,15 +714,13 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
                     <label className="form-label" htmlFor="asset-balance">
                       Số dư / Giá trị <span className="required">*</span>
                     </label>
-                    <input
+                    <FormattedAmountInput
                       id="asset-balance"
                       name="quantity"
-                      type="number"
+                      currency={selectedCurrency}
                       className="form-input"
                       value={previewQty}
-                      onChange={(e) => setPreviewQty(e.target.value)}
-                      step="any"
-                      min="0"
+                      onChange={setPreviewQty}
                       placeholder="0"
                       required
                     />
@@ -753,15 +752,13 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
                     <label className="form-label" htmlFor="asset-purchase-unit-price">
                       Đơn giá mua ({selectedCurrency}) <span className="required">*</span>
                     </label>
-                    <input
+                    <FormattedAmountInput
                       id="asset-purchase-unit-price"
                       name="purchase_unit_price"
-                      type="number"
+                      currency={selectedCurrency}
                       className="form-input"
                       value={previewPurchasePrice}
-                      onChange={(e) => setPreviewPurchasePrice(e.target.value)}
-                      step="any"
-                      min="0"
+                      onChange={setPreviewPurchasePrice}
                       placeholder="0"
                       required
                     />
@@ -935,15 +932,13 @@ export default function AssetClient({ accounts, categories, incomeCategories }: 
                   Số tiền <span className="required">*</span>
                 </label>
                 <div className="relative">
-                  <input
+                  <FormattedAmountInput
                     id="income-amount"
                     name="amount"
-                    type="number"
+                    currency={walletAccounts.find((w) => w.id === selectedIncomeWalletId)?.currency || 'VND'}
                     className="form-input pr-12"
                     value={incomeAmount}
-                    onChange={(e) => setIncomeAmount(e.target.value)}
-                    step="any"
-                    min="0.01"
+                    onChange={setIncomeAmount}
                     placeholder="0"
                     required
                   />
