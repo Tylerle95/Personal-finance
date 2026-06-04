@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
 import { useTheme, useLanguage } from '@/components/providers'
 import { Menu, LogOut, Wallet, LayoutDashboard, Sun, Moon, Globe, FolderKanban, Receipt, ArrowLeftRight, ChevronDown, ChevronRight } from 'lucide-react'
@@ -37,32 +37,22 @@ export default function DashboardLayoutClient({ user, children }: DashboardLayou
   const [rates, setRates] = useState<{ btc: number | null; sjc: number | null }>({ btc: null, sjc: null })
   const [ratesLoading, setRatesLoading] = useState<boolean>(true)
   
+  const searchParams = useSearchParams()
+  const currentTabType = searchParams.get('type') || 'asset'
+
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return window.location.pathname.startsWith('/dashboard/categories')
     }
     return false
   })
-  const [currentTabType, setCurrentTabType] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      return params.get('type') || 'asset'
-    }
-    return 'asset'
-  })
 
-  // Sync state when pathname changes during render
-  const [lastPathname, setLastPathname] = useState<string>('')
-  if (pathname !== lastPathname) {
-    setLastPathname(pathname)
+  // Automatically expand categories submenu when pathname changes
+  useEffect(() => {
     if (pathname.startsWith('/dashboard/categories')) {
       setIsCategoriesExpanded(true)
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search)
-        setCurrentTabType(params.get('type') || 'asset')
-      }
     }
-  }
+  }, [pathname])
 
   // Sync mount state
   useEffect(() => {
