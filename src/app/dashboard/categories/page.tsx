@@ -1,13 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserCategoriesByType } from '@/lib/data/assets'
+import { AssetCategory } from '@/lib/types/assets'
 import CategoryClient from './CategoryClient'
 
-interface PageProps {
-  searchParams: Promise<{ type?: string }>
-}
-
-export default async function CategoriesPage({ searchParams }: PageProps) {
+export default async function CategoriesPage() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -17,11 +13,18 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
     redirect('/login')
   }
 
-  const resolvedParams = await searchParams
-  const typeParam = resolvedParams.type
-  const activeType = typeParam === 'spending' ? 'spending' : (typeParam === 'income' ? 'income' : 'asset')
+  // Fetch all categories for this user at once
+  const { data: categoriesData, error } = await supabase
+    .from('asset_categories')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('name', { ascending: true })
 
-  const categories = await getUserCategoriesByType(user.id, activeType)
+  if (error) {
+    console.error('[CategoriesPage] error fetching categories:', error.message)
+  }
 
-  return <CategoryClient categories={categories} activeType={activeType} />
+  const categories = (categoriesData ?? []) as AssetCategory[]
+
+  return <CategoryClient categories={categories} />
 }

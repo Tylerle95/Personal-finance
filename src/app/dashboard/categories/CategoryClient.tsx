@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useActionState, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Pencil, Trash, Check, FolderKanban } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { AssetCategory, ActionResult, PREDEFINED_COLORS, PREDEFINED_ICONS } from '@/lib/types/assets'
@@ -12,10 +13,20 @@ const INITIAL_STATE: ActionResult = { error: null, success: false, message: null
 
 interface CategoryClientProps {
   categories: AssetCategory[]
-  activeType: 'asset' | 'spending' | 'income'
 }
 
-export default function CategoryClient({ categories, activeType }: CategoryClientProps) {
+export default function CategoryClient({ categories }: CategoryClientProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const typeParam = searchParams.get('type')
+  const activeType = typeParam === 'spending' ? 'spending' : (typeParam === 'income' ? 'income' : 'asset')
+
+  const filteredCategories = categories.filter((cat) => cat.type === activeType)
+
+  const handleTabChange = (type: 'asset' | 'spending' | 'income') => {
+    router.push(`/dashboard/categories?type=${type}`)
+  }
+
   const [isEditing, setIsEditing] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
   
@@ -79,13 +90,50 @@ export default function CategoryClient({ categories, activeType }: CategoryClien
   return (
     <div className="categories-page animate-fade-in-up">
       {/* Page Header */}
-      <div className="assets-page__header mb-8">
+      <div className="assets-page__header mb-6">
         <div className="assets-page__title-wrap">
           <FolderKanban className="assets-page__title-icon" size={28} />
           <h1 className="assets-page__title">
             {activeType === 'asset' ? 'Danh mục tài sản' : activeType === 'spending' ? 'Danh mục chi tiêu' : 'Danh mục thu nhập'}
           </h1>
         </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="flex gap-2 mb-8 p-1 border border-glass-border bg-glass-bg/30 backdrop-blur-md rounded-xl max-w-md animate-fade-in">
+        <button
+          type="button"
+          onClick={() => handleTabChange('asset')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+            activeType === 'asset'
+              ? 'bg-violet-500 text-white shadow-md'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-900/50'
+          }`}
+        >
+          Danh mục tài sản
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('spending')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+            activeType === 'spending'
+              ? 'bg-violet-500 text-white shadow-md'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-900/50'
+          }`}
+        >
+          Danh mục chi tiêu
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('income')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+            activeType === 'income'
+              ? 'bg-violet-500 text-white shadow-md'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-900/50'
+          }`}
+        >
+          Danh mục thu nhập
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -213,11 +261,11 @@ export default function CategoryClient({ categories, activeType }: CategoryClien
           <div className="border border-glass-border bg-glass-bg backdrop-blur-md rounded-2xl shadow-card-shadow overflow-hidden">
             <div className="p-5 border-b border-glass-border">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                Danh sách danh mục ({categories.length})
+                Danh sách danh mục ({filteredCategories.length})
               </h3>
             </div>
 
-            {categories.length === 0 ? (
+            {filteredCategories.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-sm text-slate-400 italic">Chưa có danh mục nào được tạo.</p>
               </div>
@@ -232,7 +280,7 @@ export default function CategoryClient({ categories, activeType }: CategoryClien
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((cat) => {
+                    {filteredCategories.map((cat) => {
                       const IconComponent = (Icons as unknown as Record<string, React.ComponentType<React.ComponentProps<typeof Icons.Wallet>>>)[cat.icon] || Icons.Wallet
                       return (
                         <tr
